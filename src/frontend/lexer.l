@@ -3,10 +3,36 @@
 	#include <iostream>
 	#include "parser.tab.h"
 	
-	#define DEBUG
+	/* #define DEBUG */
 	#include "dbg.h"
 
 	using yytoken = yy::parser::token;
+
+	/*
+	 * A dumb but effective way to track the locations of each token: simply
+	 * set two global variables to keep the line and column number.
+	 */
+	extern int yylineno; /* = 1, which is pre-defined by flex. */
+	int yycolumn = 1; /* Our column number counter. */
+
+	/* This macro sets the location, called by flex when a token is matched. */
+	#define YY_USER_ACTION \
+		do\
+		{\
+			yylloc->begin = yy::position(nullptr, yylineno, yycolumn);\
+			for(int i = 0; yytext[i] != '\0'; i++)\
+				if(yytext[i] == '\n')\
+				{\
+					yylineno++;\
+					yycolumn = 1;\
+				}\
+				else\
+					yycolumn++;\
+			yy::position tok_end_pos(nullptr, yylineno, yycolumn);\
+			yylloc->end = yy::position(nullptr, yylineno, yycolumn);\
+		}while(0);
+	
+	int _text_to_int(const char *text);
 %}
 
 %option bison-bridge
@@ -54,30 +80,30 @@ any-char				(.|\n)
 
  /* delimiters */
 "{"				{ DBG(std::cout << "LCBRKT" << std::endl); return yytoken::LCBRKT; }
-"}"				{ DBG(std::cout << "RCBRKT" << std::endl); return yytoken::RCBRKT }
-";"				{ DBG(std::cout << "SEMI" << std::endl); return yytoken::SEMI }
-","				{ DBG(std::cout << "COMMA" << std::endl); return yytoken::COMMA }
+"}"				{ DBG(std::cout << "RCBRKT" << std::endl); return yytoken::RCBRKT; }
+";"				{ DBG(std::cout << "SEMI" << std::endl); return yytoken::SEMI; }
+","				{ DBG(std::cout << "COMMA" << std::endl); return yytoken::COMMA; }
 
  /* operators */
-"+"				{ DBG(std::cout << "ADD" << std::endl); return yytoken::ADD }
-"-"				{ DBG(std::cout << "SUB" << std::endl); return yytoken::SUB }
-"*"				{ DBG(std::cout << "MUL" << std::endl); return yytoken::MUL }
-"/"				{ DBG(std::cout << "DIV" << std::endl); return yytoken::DIV }
-"%"				{ DBG(std::cout << "MOD" << std::endl); return yytoken::MOD }
-"!"				{ DBG(std::cout << "NOT" << std::endl); return yytoken::NOT }
-">"				{ DBG(std::cout << "GT" << std::endl); return yytoken::GT }
-"<"				{ DBG(std::cout << "LT" << std::endl); return yytoken::LT }
-"="				{ DBG(std::cout << "ASSIGN" << std::endl); return yytoken::ASSIGN }
-"=="			{ DBG(std::cout << "EQ" << std::endl); return yytoken::EQ }
-">="			{ DBG(std::cout << "GE" << std::endl); return yytoken::GE }
-"<="			{ DBG(std::cout << "LE" << std::endl); return yytoken::LE }
-"!="			{ DBG(std::cout << "NE" << std::endl); return yytoken::NE }
-"&&"			{ DBG(std::cout << "AND" << std::endl); return yytoken::AND }
-"||"			{ DBG(std::cout << "OR" << std::endl); return yytoken::OR }
-"("				{ DBG(std::cout << "LBRKT" << std::endl); return yytoken::LBRKT }
-")"				{ DBG(std::cout << "RBRKT" << std::endl); return yytoken::RBRKT }
-"["				{ DBG(std::cout << "LSBRKT" << std::endl); return yytoken::LSBRKT }
-"]"				{ DBG(std::cout << "RSBRKT" << std::endl); return yytoken::RSBRKT }
+"+"				{ DBG(std::cout << "ADD" << std::endl); return yytoken::ADD; }
+"-"				{ DBG(std::cout << "SUB" << std::endl); return yytoken::SUB; }
+"*"				{ DBG(std::cout << "MUL" << std::endl); return yytoken::MUL; }
+"/"				{ DBG(std::cout << "DIV" << std::endl); return yytoken::DIV; }
+"%"				{ DBG(std::cout << "MOD" << std::endl); return yytoken::MOD; }
+"!"				{ DBG(std::cout << "NOT" << std::endl); return yytoken::NOT; }
+">"				{ DBG(std::cout << "GT" << std::endl); return yytoken::GT; }
+"<"				{ DBG(std::cout << "LT" << std::endl); return yytoken::LT; }
+"="				{ DBG(std::cout << "ASSIGN" << std::endl); return yytoken::ASSIGN; }
+"=="			{ DBG(std::cout << "EQ" << std::endl); return yytoken::EQ; }
+">="			{ DBG(std::cout << "GE" << std::endl); return yytoken::GE; }
+"<="			{ DBG(std::cout << "LE" << std::endl); return yytoken::LE; }
+"!="			{ DBG(std::cout << "NE" << std::endl); return yytoken::NE; }
+"&&"			{ DBG(std::cout << "AND" << std::endl); return yytoken::AND; }
+"||"			{ DBG(std::cout << "OR" << std::endl); return yytoken::OR; }
+"("				{ DBG(std::cout << "LBRKT" << std::endl); return yytoken::LBRKT; }
+")"				{ DBG(std::cout << "RBRKT" << std::endl); return yytoken::RBRKT; }
+"["				{ DBG(std::cout << "LSBRKT" << std::endl); return yytoken::LSBRKT; }
+"]"				{ DBG(std::cout << "RSBRKT" << std::endl); return yytoken::RSBRKT; }
 
  /* comments */
 {line-comment}	{ DBG(std::cout << "in line comment!" << std::endl); }
