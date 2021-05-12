@@ -17,13 +17,13 @@ VarDeclNode::VarDeclNode(TypePtr base_type, AstPtrVec &&definitions)
 }
 
 SingleVarDeclNode::SingleVarDeclNode(AstPtr &&lval)
-  : NaryAstNodeBase<2>({std::move(lval), NullAst()})
+  : NaryAstNodeBase<2>({std::move(lval), NullAst()}), _type(make_null())
 {
 	DBG(std::cout << "SingleVarDeclNode built!" << std::endl);
 }
 
 SingleVarDeclNode::SingleVarDeclNode(AstPtr &&lval, AstPtr &&init_val)
-  : NaryAstNodeBase<2>({std::move(lval), std::move(init_val)})
+  : NaryAstNodeBase<2>({std::move(lval), std::move(init_val)}), _type(make_null())
 {
 	DBG(std::cout << "SingleVarDeclNode built!" << std::endl);
 }
@@ -35,19 +35,25 @@ ConstIntNode::ConstIntNode(int val)
 }
 
 IdNode::IdNode(std::string name, yy::location loc)
-  : _type(make_null()), _name(name), _loc(loc)
+  : _name(name), _loc(loc)
 {
 	DBG(std::cout << "IdNode built! name = " << _name << std::endl);
 }
 
 IdNode::IdNode(TypePtr type, std::string name, yy::location loc)
-  : _type(type), _name(name), _loc(loc)
+  : _name(name), _loc(loc)
 {
-	DBG(std::cout << "IdNode built! name = " << _name << ", type = " << _type << std::endl);
+	DBG(std::cout << "IdNode built! name = " << _name << std::endl);
 }
 
-InitializerNode::InitializerNode(AstPtrVec &&sub_initializer)
-  : XaryAstNodeBase(std::move(sub_initializer))
+InitializerNode::InitializerNode(yy::location loc)
+  : XaryAstNodeBase(), _expected_type(make_null())
+{
+	DBG(std::cout << "InitializerNode built! len = " << children_cnt() << std::endl);
+}
+
+InitializerNode::InitializerNode(AstPtrVec &&sub_initializer, yy::location loc)
+  : XaryAstNodeBase(std::move(sub_initializer)), _expected_type(make_null()), _loc(loc)
 {
 	DBG(std::cout << "InitializerNode built! len = " << children_cnt() << std::endl);
 }
@@ -77,14 +83,14 @@ TypePtrVec FuncParamsNode::get_param_types()
 {
 	TypePtrVec param_types;
 	for(const AstPtr &child : children())
-		param_types.push_back(std::get<IdNodePtr>(child)->type());
+		param_types.push_back(std::get<SingleFuncParamNodePtr>(child)->type());
 	return param_types;
 }
 
 SingleFuncParamNode::SingleFuncParamNode(TypePtr base_type, AstPtr &&lval)
-  : NaryAstNodeBase<1>({std::move(lval)}), _base_type(base_type)
+  : NaryAstNodeBase<1>({std::move(lval)}), _type(base_type)
 {
-	DBG(std::cout << "SingleFuncParamNode built! type = " << _base_type << std::endl);
+	DBG(std::cout << "SingleFuncParamNode built! type = " << _type << std::endl);
 }
 
 UnaryOpNode::UnaryOpNode(OpType op, AstPtr &&operand, yy::location loc)

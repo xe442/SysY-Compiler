@@ -36,9 +36,8 @@ void AstNodePrinter::operator() (const VarDeclNodePtr &node)
 
 void AstNodePrinter::operator() (const SingleVarDeclNodePtr &node)
 {
-	_print_type = true;
+	out << node->type();
 	std::visit(*this, node->lval());
-	_print_type = false;
 	if(!is_null_ast(node->init_val()))
 	{
 		out << " = ";
@@ -53,8 +52,6 @@ void AstNodePrinter::operator() (const ConstIntNodePtr &node)
 
 void AstNodePrinter::operator() (const IdNodePtr &node)
 {
-	if(_print_type)
-		out << node->type() << ' ';
 	out << node->name();
 }
 
@@ -82,22 +79,22 @@ void AstNodePrinter::operator() (const FuncDefNodePtr &node)
 	out << indent;
 	std::visit(*this, node->block());
 	indent.decr();
+	out << "end func def";
 }
 
 void AstNodePrinter::operator() (const FuncParamsNodePtr &node)
 {
-	_print_type = true;
 	for(int i = 0; i < node->children_cnt(); i++)
 	{
 		if(i != 0)
 			out << ", ";
 		std::visit(*this, node->get(i));
 	}
-	_print_type = false;
 }
 
 void AstNodePrinter::operator() (const SingleFuncParamNodePtr &node)
 {
+	out << node->type() << ' ';
 	std::visit(*this, node->lval());
 }
 

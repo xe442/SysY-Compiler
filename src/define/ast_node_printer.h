@@ -21,8 +21,6 @@ struct AstNodePrinter
 
 	std::ostream &out;
 	Indent indent = Indent();
-  protected:
-	bool _print_type = false;
 
   public:
 	AstNodePrinter(std::ostream &_out): out(_out) {}

@@ -180,12 +180,14 @@ class VarDeclNode: public XaryAstNodeBase
 // ExprNode = IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode
 class SingleVarDeclNode: public NaryAstNodeBase<2>
 {
+	TypePtr _type; // The type of the declared variable. Set during semantic analysis.
   public:
 	SingleVarDeclNode() = default;
 	SingleVarDeclNode(AstPtr &&lval);
 	SingleVarDeclNode(AstPtr &&lval, AstPtr &&init_val);
 	
 	// Getters & setters.
+	inline TypePtr type() const { return _type; }
 	inline const AstPtr &lval() const { return get(0); }
 	inline const AstPtr &init_val() const { return get(1); }
 	inline AstPtr &lval_() { return get_(0); }
@@ -208,7 +210,6 @@ class ConstIntNode: public AstLeafNodeBase
 class IdNode: public AstLeafNodeBase
 {
   protected:
-	TypePtr _type;
 	std::string _name;
 	yy::position _pos;
 	yy::location _loc;
@@ -222,9 +223,7 @@ class IdNode: public AstLeafNodeBase
 	IdNode(std::string name, yy::location loc);
 
 	// Getters & setters.
-	inline const TypePtr &type() const { return _type; }
 	inline const std::string &name() { return _name; }
-	inline void set_type(TypePtr type) { _type = type; }
 	inline yy::location location() const { return _loc; }
 };
 
@@ -233,9 +232,18 @@ class IdNode: public AstLeafNodeBase
 // ExprNode = IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode
 class InitializerNode: public XaryAstNodeBase
 {
+  protected:
+	TypePtr _expected_type;
+	yy::location _loc;
+
   public:
 	InitializerNode() = default;
-	InitializerNode(AstPtrVec &&sub_initializer);
+
+	// typeless InitializerNode
+	InitializerNode(yy::location loc);
+	InitializerNode(AstPtrVec &&sub_initializer, yy::location loc);
+	
+	yy::location location() const { return _loc; }
 };
 
 // FuncDefNode
@@ -274,13 +282,13 @@ class FuncParamsNode: public XaryAstNodeBase
 //  -> BinaryOpNode(ACCESS only)|UnaryOpNode(POINTER only)|IdNode
 class SingleFuncParamNode: public NaryAstNodeBase<1>
 {
-	TypePtr _base_type;
+	TypePtr _type;  // This is set only to basic type during syntax analysis.
   public:
 	SingleFuncParamNode() = default;
 	SingleFuncParamNode(TypePtr base_type, AstPtr &&lval);
 
 	// Getters
-	inline const TypePtr &base_type() const { return _base_type; }
+	inline const TypePtr &type() const { return _type; }
 	inline const AstPtr &lval() const { return get(0); }
 	inline AstPtr &lval_() { return get_(0); }
 };
@@ -364,6 +372,11 @@ class IfNode: public NaryAstNodeBase<3>
 	IfNode() = default;
 	IfNode(AstPtr &&expr, AstPtr &&if_body);
 	IfNode(AstPtr &&expr, AstPtr &&if_body, AstPtr &&else_body);
+
+	// Getters.
+	const AstPtr &expr() const { return get(0); }
+	const AstPtr &if_body() const { return get(1); }
+	const AstPtr &else_body() const { return get(2); }
 };
 
 // WhileNode
@@ -374,6 +387,10 @@ class WhileNode: public NaryAstNodeBase<2>
   public:
 	WhileNode() = default;
 	WhileNode(AstPtr &&expr, AstPtr &&body);
+
+	// Getters.
+	const AstPtr &expr() const { return get(0); }
+	const AstPtr &body() const { return get(1); }
 };
 
 class BreakNode: public AstLeafNodeBase

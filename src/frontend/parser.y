@@ -6,7 +6,7 @@
 %locations // Track token locations.
 %define api.location.file "../utils/location.h"
 
-%define parse.trace // enable parser trace
+%parse-param {compiler::define::AstPtr &prog_node}
 
 %code requires
 {
@@ -29,18 +29,20 @@
 
 %define api.value.type variant // Set the type of lvals.
 
-// These lval types are not used.
+// The unused terminal retval type.
 %token<int> CONST INT VOID IF ELSE WHILE BREAK CONT RET
 %token<int> LCBRKT RCBRKT SEMI COMMA
 %token<int> ADD SUB MUL DIV MOD NOT GT LT ASSIGN EQ GE LE NE AND OR LBRKT RBRKT
 			LSBRKT RSBRKT
 
-// The used token lval type.
 %token<int> UINT
 %token<std::string> ID
 
+// The unused non-terminal retval type.
+%nterm<int> program
+
 %nterm<compiler::define::AstPtr> 
-		program var_decl single_var_decl array_initializer func_def func_def_params
+		var_decl single_var_decl array_initializer func_def func_def_params
 		func_def_param arr_param_decl block block_item statement assign_statement
 		if_statement while_statement return_statement break_statement cont_statement
 		expr array_access func_call func_args
@@ -60,17 +62,15 @@
 %%
 
 program: // ProgramNode
-  %empty { $$ = std::make_unique<compiler::define::ProgramNode>(); }
-| program[subprogram] var_decl
+  %empty { prog_node = std::make_unique<compiler::define::ProgramNode>(); }
+| program var_decl
 		{
-			$$ = std::move($subprogram);
-			std::get<compiler::define::ProgramNodePtr>($$)->push_back(
+			std::get<compiler::define::ProgramNodePtr>(prog_node)->push_back(
 				std::move($var_decl));
 		}
-| program[subprogram] func_def
+| program func_def
 		{
-			$$ = std::move($subprogram);
-			std::get<compiler::define::ProgramNodePtr>($$)->push_back(
+			std::get<compiler::define::ProgramNodePtr>(prog_node)->push_back(
 				std::move($func_def));
 		}
 ;
@@ -130,12 +130,12 @@ array_initializer: // InitializerNode
   LCBRKT array_initializer_list RCBRKT
   		{
   			$$ = std::make_unique<compiler::define::InitializerNode>(
-  				std::move($array_initializer_list)
+  				std::move($array_initializer_list), @array_initializer_list
   			);
   		}
 | LCBRKT RCBRKT
 		{
-			$$ = std::make_unique<compiler::define::InitializerNode>();
+			$$ = std::make_unique<compiler::define::InitializerNode>(@LCBRKT);
 		}
 ;
 
@@ -533,10 +533,4 @@ namespace yy
 	{
 		std::cerr << "error at " << loc << ": " << msg << std::endl;
 	}
-}
-
-int main()
-{
-	auto parser = yy::parser();
-	parser.parse();
 }
