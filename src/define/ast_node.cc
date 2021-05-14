@@ -47,13 +47,13 @@ IdNode::IdNode(TypePtr type, std::string name, yy::location loc)
 }
 
 InitializerNode::InitializerNode(yy::location loc)
-  : XaryAstNodeBase(), _expected_type(make_null())
+  : XaryAstNodeBase(), _loc(loc)
 {
 	DBG(std::cout << "InitializerNode built! len = " << children_cnt() << std::endl);
 }
 
 InitializerNode::InitializerNode(AstPtrVec &&sub_initializer, yy::location loc)
-  : XaryAstNodeBase(std::move(sub_initializer)), _expected_type(make_null()), _loc(loc)
+  : XaryAstNodeBase(std::move(sub_initializer)), _loc(loc)
 {
 	DBG(std::cout << "InitializerNode built! len = " << children_cnt() << std::endl);
 }
@@ -77,14 +77,6 @@ FuncParamsNode::FuncParamsNode(AstPtrVec &&params)
   : XaryAstNodeBase(std::move(params))
 {
 	DBG(std::cout << "FuncParamsNode built! len = " << children_cnt() << std::endl);
-}
-
-TypePtrVec FuncParamsNode::get_param_types()
-{
-	TypePtrVec param_types;
-	for(const AstPtr &child : children())
-		param_types.push_back(std::get<SingleFuncParamNodePtr>(child)->type());
-	return param_types;
 }
 
 SingleFuncParamNode::SingleFuncParamNode(TypePtr base_type, AstPtr &&lval)

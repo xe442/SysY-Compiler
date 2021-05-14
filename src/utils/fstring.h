@@ -1,21 +1,28 @@
+#ifndef FSTRING_H
+#define FSTRING_H
+
 #include <sstream>
 
 namespace compiler::utils
 {
 
-// TODO: change these "private" fuctions to private member functions of a class.
-void _fstring_with_strstream(std::ostringstream &oss)
+class Fstring
 {
-	oss << std::ends;
-	return;
-}
+	std::ostringstream oss;
 
-template<class T, class... Ts>
-void _fstring_with_strstream(std::ostringstream &oss, const T &t, const Ts&... ts)
-{
-	oss << t;
-	fstring_with_strstream(oss, ts...);
-}
+  public:
+	Fstring(): oss() {}
+	std::string str() { return oss.str(); }
+
+	void print() { oss << std::ends; }
+
+	template<class T, class... Ts>
+	void print(const T &t, const Ts&... ts)
+	{
+		oss << t;
+		print(ts...);
+	}
+};
 
 // Prints several objects to a string.
 // Example usage:
@@ -23,9 +30,11 @@ void _fstring_with_strstream(std::ostringstream &oss, const T &t, const Ts&... t
 template<class... Ts>
 std::string fstring(const Ts&... ts)
 {
-	std::ostringstream oss;
-	fstring_with_strstream(oss, ts...);
-	return oss.str();
+	Fstring fstring;
+	fstring.print(ts...);
+	return fstring.str();
 }
 
 } // namespace compiler::utils
+
+#endif

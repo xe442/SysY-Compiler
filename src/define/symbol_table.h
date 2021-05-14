@@ -29,17 +29,19 @@ struct SymbolTableEntry
 class SymbolTable
 {
 	std::vector<std::unordered_map<std::string, SymbolTableEntry>> _table;
+	static const std::vector<std::pair<std::string, SymbolTableEntry>> INTERNAL_FUNCTIONS;
   
   public:
-	SymbolTable() { new_block(); }
+	SymbolTable(std::vector<std::pair<std::string, SymbolTableEntry>> init=INTERNAL_FUNCTIONS);
 	~SymbolTable() { end_block(); }
 	inline bool empty() const { return _table.empty(); }
 	void new_block();
 	void end_block();
 
 	std::optional<SymbolTableEntry> find(const std::string &name) const;
-	bool insert(const std::string &name, SymbolTableEntry entry); // return whether the insertion is successful.
-	// SymbolTableEntry & operator [](const std::string &name);
+	bool insert(const std::string &name, const TypePtr &type);
+	bool insert(const std::string &name, const TypePtr &type, int initial_val);
+		// return whether the insertion is successful.
 };
 
 } // namespace compiler::define

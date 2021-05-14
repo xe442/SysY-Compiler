@@ -1,5 +1,4 @@
 #include "type.h"
-#include "dbg.h"
 #include "exceptions.h"
 #include "visitor_helper.h"
 
@@ -12,8 +11,8 @@ bool is_const(const TypePtr &type)
 {
 	static LambdaVisitor const_checker = {
 		[](const IntTypePtr &t) { return t->is_const(); },
-		[](const ArrayTypePtr &t) { return t->is_const(); },
-		[](const PointerTypePtr &t) { return false; }, // Pointers are always dymatic.
+		[](const ArrayTypePtr &t) { return is_const(t->element_type()); },
+		[](const PointerTypePtr &t) { return false; }, // pointers are alway variable
 		[](const auto &t) { return false; }
 	};
 	return std::visit(const_checker, type);
@@ -32,10 +31,17 @@ bool is_basic(const TypePtr &type)
 bool same_type(const TypePtr &type1, const TypePtr &type2)
 {
 	static LambdaVisitor type_checker = {
-		[](const VoidTypePtr &t1, const VoidTypePtr &t2) { return t1->same_as(t2); },
-		[](const IntTypePtr &t1, const IntTypePtr &t2) { return t1->same_as(t2); },
-		[](const ArrayTypePtr &t1, const ArrayTypePtr &t2) { return t1->same_as(t2); },
-		[](const PointerTypePtr &t1, const PointerTypePtr &t2) { return t1->same_as(t2); },
+		[](const VoidTypePtr &t1, const VoidTypePtr &t2) { return true; },
+		[](const IntTypePtr &t1, const IntTypePtr &t2)
+			{ return t1->is_const() == t2->is_const(); },
+		[](const ArrayTypePtr &t1, const ArrayTypePtr &t2)
+			{
+				if(t1->len() != t2->len())
+					return false;
+				return same_type(t1->element_type(), t2->element_type());
+			},
+		[](const PointerTypePtr &t1, const PointerTypePtr &t2)
+			{ return same_type(t1->base_type(), t2->base_type()); },
 		[](const auto &t1, const auto &t2) { return false; }
 	};
 	return std::visit(type_checker, type1, type2);
@@ -44,8 +50,11 @@ bool same_type(const TypePtr &type1, const TypePtr &type2)
 bool accept_type(const TypePtr &req_type, const TypePtr &prov_type)
 {
 	static LambdaVisitor type_checker = {
-		[](const IntTypePtr &t1, const IntTypePtr &t2) { return t1->accepts(t2); },
-		[](const PointerTypePtr &t1, const ArrayTypePtr &t2) { return t1->accepts(t2); },
+		[](const IntTypePtr &t1, const IntTypePtr &t2) { return true; },
+		[](const PointerTypePtr &t1, const ArrayTypePtr &t2)
+			{ return accept_type(t1->base_type(), t2->element_type()); },
+		[](const PointerTypePtr &t1, const PointerTypePtr &t2)
+			{ return accept_type(t1->base_type(), t2->base_type()); },
 		[](const auto &t1, const auto &t2) { return false; }
 	};
 	return std::visit(type_checker, req_type, prov_type);
@@ -54,7 +63,7 @@ bool accept_type(const TypePtr &req_type, const TypePtr &prov_type)
 bool can_operate(const TypePtr &type1, const TypePtr &type2)
 {
 	static LambdaVisitor operate_checker = {
-		[](const IntType &t1, const IntType &t2) { return true; },
+		[](const IntTypePtr &t1, const IntTypePtr &t2) { return true; },
 		[](const auto &t1, const auto &t2) { return false; }
 	};
 	return std::visit(operate_checker, type1, type2);
@@ -81,12 +90,24 @@ int ArrayType::element_size() const
 	return std::visit(size_calculator, element_type());
 }
 
-bool ArrayType::same_as(ArrayTypePtr other) const
+ArrayType::ArrayType(TypePtr base_type, std::vector<int> dim_size)
+  : ArrayType(base_type, dim_size.begin(), dim_size.end())
+{}
+
+ArrayType::ArrayType(TypePtr base_type, std::vector<int>::iterator dim_begin,
+		std::vector<int>::iterator dim_end)
 {
-	if(len() != other->len() || is_basic(element_type()) != is_basic(other->element_type()))
-		return false;
-	return std::get<ArrayTypePtr>(element_type())->same_as(
-		std::get<ArrayTypePtr>(other->element_type()));
+	if(dim_begin >= dim_end)
+		INTERNAL_ERROR("empty dimension array provided for ArrayType constructor");
+	if(!is_basic(base_type))
+		INTERNAL_ERROR("non-basic type provided for ArrayType constructor");
+	
+	_len = *dim_begin;
+	++dim_begin;
+	if(dim_begin != dim_end)
+		_ele_type = std::make_shared<ArrayType>(base_type, dim_begin, dim_end);
+	else
+		_ele_type = base_type;
 }
 
 TypePtr make_null()
@@ -126,8 +147,8 @@ void TypePrinter::operator() (const IntTypePtr &t)
 }
 void TypePrinter::operator() (const ArrayTypePtr &t)
 {
-	std::visit(*this, t->element_type());
 	out << '[' << t->len() << ']';
+	std::visit(*this, t->element_type());
 }
 void TypePrinter::operator() (const PointerTypePtr &t)
 {

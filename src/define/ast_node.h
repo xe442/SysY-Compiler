@@ -192,7 +192,8 @@ class SingleVarDeclNode: public NaryAstNodeBase<2>
 	inline const AstPtr &init_val() const { return get(1); }
 	inline AstPtr &lval_() { return get_(0); }
 	inline AstPtr &init_val_() { return get_(1); }
-	inline void set_init_val(AstPtr &&init_val) { set(0, std::move(init_val)); }
+	inline void set_type(TypePtr type) { _type = type; }
+	inline void set_init_val(AstPtr &&init_val) { set(1, std::move(init_val)); }
 };
 
 class ConstIntNode: public AstLeafNodeBase
@@ -233,7 +234,6 @@ class IdNode: public AstLeafNodeBase
 class InitializerNode: public XaryAstNodeBase
 {
   protected:
-	TypePtr _expected_type;
 	yy::location _loc;
 
   public:
@@ -243,6 +243,7 @@ class InitializerNode: public XaryAstNodeBase
 	InitializerNode(yy::location loc);
 	InitializerNode(AstPtrVec &&sub_initializer, yy::location loc);
 	
+	// Getters & setters
 	yy::location location() const { return _loc; }
 };
 
@@ -251,20 +252,29 @@ class InitializerNode: public XaryAstNodeBase
 class FuncDefNode: public NaryAstNodeBase<3>
 {
 	TypePtr _retval_type;
+	TypePtr _func_type;
 
   public:
 	FuncDefNode() = default;
 	FuncDefNode(TypePtr retval_type, AstPtr &&name, AstPtr &&block);
 	FuncDefNode(TypePtr retval_type, AstPtr &&name, AstPtr &&param_list, AstPtr &&block);
 
-	// Getters.
-	inline const TypePtr &retval_type() { return _retval_type; }
+	// Getters & setters.
+	inline const TypePtr &retval_type() const { return _retval_type; }
+	inline const TypePtr &type() const { return _func_type; }
 	inline const AstPtr &name() const { return get(0); }
 	inline const AstPtr &params() const { return get(1); }
 	inline const AstPtr &block() const { return get(2); }
+	inline const IdNodePtr &actual_name() const
+		{ return std::get<IdNodePtr>(get(0)); }
+	inline const FuncParamsNodePtr &actual_params() const
+		{ return std::get<FuncParamsNodePtr>(get(1)); }
+	inline const BlockNodePtr &actual_block() const
+		{ return std::get<BlockNodePtr>(get(2)); }
 	inline AstPtr &name_() { return get_(0); }
 	inline AstPtr &params_() { return get_(1); }
 	inline AstPtr &block_() { return get_(2); }
+	inline void set_type(const TypePtr &type) { _func_type = type; }
 };
 
 // FuncParamsNode
@@ -274,8 +284,6 @@ class FuncParamsNode: public XaryAstNodeBase
   public:
 	FuncParamsNode() = default;
 	FuncParamsNode(AstPtrVec &&params);
-
-	TypePtrVec get_param_types();
 };
 
 // SingleFuncParamNode
@@ -287,10 +295,11 @@ class SingleFuncParamNode: public NaryAstNodeBase<1>
 	SingleFuncParamNode() = default;
 	SingleFuncParamNode(TypePtr base_type, AstPtr &&lval);
 
-	// Getters
+	// Getters & setters.
 	inline const TypePtr &type() const { return _type; }
 	inline const AstPtr &lval() const { return get(0); }
 	inline AstPtr &lval_() { return get_(0); }
+	inline void set_type(const TypePtr &type) { _type = type; }
 };
 
 // BlockNode
@@ -377,6 +386,9 @@ class IfNode: public NaryAstNodeBase<3>
 	const AstPtr &expr() const { return get(0); }
 	const AstPtr &if_body() const { return get(1); }
 	const AstPtr &else_body() const { return get(2); }
+	AstPtr &expr_() { return get_(0); }
+	AstPtr &if_body_() { return get_(1); }
+	AstPtr &else_body_() { return get_(2); }
 };
 
 // WhileNode
@@ -447,8 +459,8 @@ class FuncCallNode: public NaryAstNodeBase<2>
 
 	inline const AstPtr &id() const { return get(0); }
 	inline AstPtr &id_() { return get_(0); }
-	inline const AstPtr &params() const { return get(1); }
-	inline AstPtr &params_() { return get_(1); }
+	inline const AstPtr &args() const { return get(1); }
+	inline AstPtr &args_() { return get_(1); }
 };
 
 // FuncArgsNode

@@ -49,7 +49,7 @@ TypePtr common_type(const TypePtr &type1, const TypePtr &type2);
 // Handy constructors.
 TypePtr make_null();
 TypePtr make_void();
-TypePtr make_int(bool is_const);
+TypePtr make_int(bool is_const=false);
 
 class Type
 {
@@ -66,10 +66,6 @@ class VoidType: public Type
   public:
 	void init_size() override { _size = 0; }
 	VoidType() {}
-
-	// Type checkers.
-	bool same_as(VoidTypePtr other) const { return true; }
-	// Missing bool accepts: void types can not be argument types.
 };
 
 class IntType: public Type
@@ -83,10 +79,6 @@ class IntType: public Type
 	IntType(bool is_const)
 	  : _is_const(is_const) { init_size(); }
 
-	// Type checkers.
-	bool same_as(IntTypePtr other) const { return is_const() == other->is_const(); }
-	bool accepts(IntTypePtr arg_type) const { return true; } // any int is acceptible
-
 	// Getter functions.
 	inline bool is_const() const { return _is_const; }
 };
@@ -94,7 +86,6 @@ class IntType: public Type
 class ArrayType: public Type
 {
   protected:
-	bool _is_const;
 	int _len;
 	TypePtr _ele_type;
 
@@ -102,23 +93,19 @@ class ArrayType: public Type
 	int element_size() const;
 	void init_size() { _size = _len * element_size(); }
 
-	ArrayType(bool is_const, bool is_lval, int len, TypePtr ele_type)
-	  : _is_const(is_const), _len(len), _ele_type(std::move(ele_type))
-	{ init_size(); }
-
-	// Type checkers.
-	bool same_as(ArrayTypePtr other) const;
-	// Missing bool accepts: array types cannot be argument types.
+	// Build a array type given the size of all dimensions and a base_type.
+	ArrayType(TypePtr base_type, std::vector<int> dim_size);
+	ArrayType(TypePtr base_type, std::vector<int>::iterator dim_begin,
+		std::vector<int>::iterator dim_end);
 
 	// Getters.
-	inline bool is_const() const { return _is_const; }
 	inline const TypePtr &element_type() const { return _ele_type; }
 	inline int len() const { return _len; }
+	inline bool is_1d_arr() const { return is_basic(element_type()); }
 
 	// Length setter.
 	inline void set_len(int len) { _len = len; }
 };
-
 
 /*
  * Although there are no pointers in Sys-Y, we still define and use it for function
@@ -140,13 +127,6 @@ class PointerType: public Type
 	PointerType(TypePtr base_type)
 	  : _base_type(base_type) {}
 
-	// Type checkers.
-	bool same_as(PointerTypePtr other) const
-		{ return same_type(base_type(), other->base_type()); }
-	bool accepts(ArrayTypePtr func_arg) const
-		// this is speical, a pointer type can only accept an array type as argument.
-		{ return same_type(base_type(), func_arg->element_type()); }
-
 	// Getters.
 	inline const TypePtr &base_type() const { return _base_type; }
 };
@@ -155,20 +135,18 @@ class FuncType: public Type
 {
   protected:
 	TypePtr _retval_type;
-	std::vector<TypePtr> _arg_types;
+	TypePtrVec _arg_types;
 
   public:
-	void init_size() override { _size = 0; } // TODO: what is the size of a function?
+	void init_size() override { _size = 1; } // Not used.
 
-	FuncType(TypePtr retval_type, std::vector<TypePtr> arg_types)
+	FuncType(TypePtr retval_type, TypePtrVec arg_types)
 	  : _retval_type(retval_type), _arg_types(std::move(arg_types)) {}
-
-	// No type checkers, since we never compare whether two functions are the same.
 
 	// Getters.
 	const TypePtr &retval_type() const { return _retval_type; }
 	int arg_cnt() const { return _arg_types.size(); }
-	const std::vector<TypePtr> &arg_types() const { return _arg_types; }
+	const TypePtrVec &arg_types() const { return _arg_types; }
 	const TypePtr &arg_type(int idx) const { return _arg_types[idx]; }
 };
 

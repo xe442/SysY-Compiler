@@ -1,6 +1,40 @@
 #include "symbol_table.h"
 
+using std::make_shared;
+using std::make_pair;
 using namespace compiler::define;
+
+namespace compiler::define
+{
+
+/* 
+ * default internal functions: 
+ * int getint()
+ * int getch()
+ * int getarray(int a[])
+ * void putint(int a)
+ * void putch(int a)
+ * void putarray(int n, int a[])
+ * void starttime()
+ * void stoptime()
+ */
+const std::vector<std::pair<std::string, SymbolTableEntry>> SymbolTable::INTERNAL_FUNCTIONS = {
+	make_pair("getint", SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))),
+	make_pair("getch", SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))),
+	make_pair("getarray", SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec{make_shared<PointerType>(make_int())}))),
+	make_pair("putint", SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))),
+	make_pair("putch", SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))),
+	make_pair("putarray", SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int(), make_shared<PointerType>(make_int())}))),
+	make_pair("starttime", SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))),
+	make_pair("stoptime", SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec())))
+};
+
+SymbolTable::SymbolTable(std::vector<std::pair<std::string, SymbolTableEntry>> init)
+{
+	new_block();
+	for(auto &name_entry_pair : init)
+		_table.back().insert(name_entry_pair);
+}
 
 void SymbolTable::new_block()
 {
@@ -28,7 +62,7 @@ std::optional<SymbolTableEntry> SymbolTable::find(const std::string &name) const
 	return std::nullopt;
 }
 
-bool SymbolTable::insert(const std::string &name, SymbolTableEntry entry)
+bool SymbolTable::insert(const std::string &name, const TypePtr &type)
 {
 	if(_table.empty())
 		INTERNAL_ERROR("inserting an id to an empty symbol table");
@@ -36,21 +70,26 @@ bool SymbolTable::insert(const std::string &name, SymbolTableEntry entry)
 	auto entry_ptr = _table.back().find(name);
 	if(entry_ptr == _table.back().end()) // does not exist, insert it
 	{
-		_table.back().insert(std::make_pair(name, entry));
+		_table.back()[name] = SymbolTableEntry(type);
 		return true;
 	}
 	else
 		return false;
 }
 
-// SymbolTableEntry & SymbolTable::operator [](const std::string &name)
-// {
-// 	auto entry = find(name);
-// 	if(entry.has_value())
-// 		return const_cast<SymbolTableEntry &>(entry.value());
+bool SymbolTable::insert(const std::string &name, const TypePtr &type, int initial_val)
+{
+	if(_table.empty())
+		INTERNAL_ERROR("inserting an id to an empty symbol table");
+	
+	auto entry_ptr = _table.back().find(name);
+	if(entry_ptr == _table.back().end())
+	{
+		_table.back()[name] = SymbolTableEntry(type, initial_val);
+		return true;
+	}
+	else
+		return false;
+}
 
-// 	// if not found, insert a new identifier in the last block of a symbol table.
-// 	auto insert_res = _table.back().insert(std::make_pair(name, SymbolTableEntry()));
-// 		// type(insert_res) = pair(iterator, bool)
-// 	return insert_res.first->second;
-// }
+} // namespace define
