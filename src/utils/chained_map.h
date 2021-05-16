@@ -1,15 +1,12 @@
-#ifndef SYMBOL_TABLE_H
-#define SYMBOL_TABLE_H
+#ifndef CHAINED_MAP_H
+#define CHAINED_MAP_H
 
-#include <string>
 #include <list>
 #include <unordered_map>
 #include <optional>
 #include "exceptions.h"
-#include "type.h"
 
-
-namespace compiler::define
+namespace compiler::utils
 {
 
 // Base class of symbol table. Can also be used to hold other chained-block-like elements.
@@ -64,47 +61,24 @@ class ChainedMap
 			INTERNAL_ERROR("cannot insert element to an empty chained map");
 		return _table.back().insert(key_val_pair);
 	}
-
 	std::pair<MapIter, bool> basic_insert(std::pair<TKey, TVal> &&key_val_pair)
 	{
 		if(empty())
 			INTERNAL_ERROR("cannot insert element to an empty chained map");
 		return _table.back().insert(std::move(key_val_pair));
 	}
-};
-
-struct SymbolTableEntry
-{
-	TypePtr type;
-	std::optional<int> initial_val; // Only used for type = "const int".
-
-  public:
-	SymbolTableEntry() = default;
-	SymbolTableEntry(const TypePtr &_type)
-	  : type(_type), initial_val(std::nullopt) {}
-	SymbolTableEntry(const TypePtr &_type, int _initial_val)
-	  : type(_type), initial_val(_initial_val) {}
-};
-
-// A chained symbol table.
-class SymbolTable: public ChainedMap<std::string, SymbolTableEntry>
-{
-	static const std::vector<std::pair<std::string, SymbolTableEntry>> INTERNAL_FUNCTIONS;
-  
-  public:
-	SymbolTable(std::vector<std::pair<std::string, SymbolTableEntry>> init=INTERNAL_FUNCTIONS);
-
-	inline std::optional<SymbolTableEntry> find(const std::string &name) const
-		{
-			auto find_res = basic_find(name);
-			if(!find_res.has_value())
-				return std::nullopt;
-			return find_res.value()->second;
-		}
-	inline bool insert(const std::string &name, const TypePtr &type)
-		{ return basic_insert(std::make_pair(name, SymbolTableEntry(type))).second; }
-	inline bool insert(const std::string &name, const TypePtr &type, int initial_val)
-		{ return basic_insert(std::make_pair(name, SymbolTableEntry(type, initial_val))).second; }
+	std::pair<MapIter, bool> basic_insert(const TKey &key, const TVal &val)
+	{
+		if(empty())
+			INTERNAL_ERROR("cannot insert element to an empty chained map");
+		return _table.back().insert(std::make_pair(key, val));
+	}
+	std::pair<MapIter, bool> basic_insert(TKey &&key, TVal &&val)
+	{
+		if(empty())
+			INTERNAL_ERROR("cannot insert element to an empty chained map");
+		return _table.back().insert(std::make_pair(std::move(key), std::move(val)));
+	}
 };
 
 } // namespace compiler::define

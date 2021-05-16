@@ -4,7 +4,7 @@
 #include <variant>
 #include <type_traits>
 #include "ast_node.h"
-#include "symbol_table.h"
+#include "semantic_symbol_table.h"
 
 namespace compiler::frontend
 {
@@ -23,9 +23,9 @@ class SemanticChecker
 	// non-const ids.
 	struct ConstExprReplacer
 	{
-		const define::SymbolTable &table;
+		const SymbolTable &table;
 
-		ConstExprReplacer(define::SymbolTable &_table)
+		ConstExprReplacer(SymbolTable &_table)
 		  : table(_table) {}
 
 		define::AstPtr operator() (define::ConstIntNodePtr &node);
@@ -97,11 +97,11 @@ class SemanticChecker
 	// the expression. Does necessary constants optimization when needed.
 	struct TypeChecker
 	{
-		define::SymbolTable &table;
+		SymbolTable &table;
 		bool optimize_constants; // TODO: implement optimize_constants.
 								 // This is currently not functional.
 
-		TypeChecker(define::SymbolTable &_table)
+		TypeChecker(SymbolTable &_table)
 		  : table(_table), optimize_constants(false) {}
 
 		define::TypePtr operator() (define::ConstIntNodePtr &node);
@@ -118,7 +118,7 @@ class SemanticChecker
 	};
 
   public:
-	define::SymbolTable table;
+	SymbolTable table;
 	ConstExprReplacer const_expr_replacer;
 	DeclTypeDeducer type_deducer;
 	TypeChecker type_checker;

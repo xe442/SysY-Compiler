@@ -461,6 +461,10 @@ class FuncCallNode: public NaryAstNodeBase<2>
 	inline AstPtr &id_() { return get_(0); }
 	inline const AstPtr &args() const { return get(1); }
 	inline AstPtr &args_() { return get_(1); }
+	inline const IdNodePtr &actual_id() const
+		{ return std::get<IdNodePtr>(get(0)); }
+	inline const FuncArgsNodePtr &actual_args() const
+		{ return std::get<FuncArgsNodePtr>(get(1)); }
 };
 
 // FuncArgsNode

@@ -45,6 +45,7 @@ bool same_type(const TypePtr &type1, const TypePtr &type2);
 bool accept_type(const TypePtr &req_type, const TypePtr &prov_type);
 bool can_operate(const TypePtr &type1, const TypePtr &type2);
 TypePtr common_type(const TypePtr &type1, const TypePtr &type2);
+int get_size(const TypePtr &type);
 
 // Handy constructors.
 TypePtr make_null();
@@ -57,15 +58,13 @@ class Type
 	int _size;
 
   public:
-	virtual void init_size() = 0;
 	inline int size() const { return _size; }
 };
 
 class VoidType: public Type
 {
   public:
-	void init_size() override { _size = 0; }
-	VoidType() {}
+	VoidType() { _size = 0; }
 };
 
 class IntType: public Type
@@ -74,10 +73,9 @@ class IntType: public Type
 	bool _is_const;
 
   public:
-	void init_size() override { _size = sizeof(int); }
 
 	IntType(bool is_const)
-	  : _is_const(is_const) { init_size(); }
+	  : _is_const(is_const) { _size = sizeof(int); }
 
 	// Getter functions.
 	inline bool is_const() const { return _is_const; }
@@ -91,7 +89,6 @@ class ArrayType: public Type
 
   public:
 	int element_size() const;
-	void init_size() { _size = _len * element_size(); }
 
 	// Build a array type given the size of all dimensions and a base_type.
 	ArrayType(TypePtr base_type, std::vector<int> dim_size);
@@ -122,10 +119,8 @@ class PointerType: public Type
 	TypePtr _base_type; // the type that the pointer points to
 
   public:
-	void init_size() override { _size = sizeof(int); }
-
 	PointerType(TypePtr base_type)
-	  : _base_type(base_type) {}
+	  : _base_type(base_type) { _size = sizeof(int); } // _size not used.
 
 	// Getters.
 	inline const TypePtr &base_type() const { return _base_type; }
@@ -138,10 +133,9 @@ class FuncType: public Type
 	TypePtrVec _arg_types;
 
   public:
-	void init_size() override { _size = 1; } // Not used.
-
 	FuncType(TypePtr retval_type, TypePtrVec arg_types)
-	  : _retval_type(retval_type), _arg_types(std::move(arg_types)) {}
+	  : _retval_type(retval_type), _arg_types(std::move(arg_types))
+	{ _size = 1; } // _size not used.
 
 	// Getters.
 	const TypePtr &retval_type() const { return _retval_type; }

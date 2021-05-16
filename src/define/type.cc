@@ -80,6 +80,16 @@ TypePtr common_type(const TypePtr &type1, const TypePtr &type2)
 	return std::visit(common_type_getter, type1, type2);
 }
 
+int get_size(const TypePtr &type)
+{
+	static LambdaVisitor type_calculator = {
+		[](const std::monostate &t) { return 0; },
+		[](const auto &t)
+			{ return std::static_pointer_cast<const Type>(t)->size(); }
+	};
+	return std::visit(type_calculator, type);
+}
+
 int ArrayType::element_size() const
 {
 	static LambdaVisitor size_calculator = {
@@ -92,7 +102,7 @@ int ArrayType::element_size() const
 
 ArrayType::ArrayType(TypePtr base_type, std::vector<int> dim_size)
   : ArrayType(base_type, dim_size.begin(), dim_size.end())
-{}
+{ _size = _len * element_size(); }
 
 ArrayType::ArrayType(TypePtr base_type, std::vector<int>::iterator dim_begin,
 		std::vector<int>::iterator dim_end)
@@ -108,6 +118,7 @@ ArrayType::ArrayType(TypePtr base_type, std::vector<int>::iterator dim_begin,
 		_ele_type = std::make_shared<ArrayType>(base_type, dim_begin, dim_end);
 	else
 		_ele_type = base_type;
+	_size = _len * element_size();
 }
 
 TypePtr make_null()
