@@ -7,6 +7,7 @@
 
 // A handy internal error thrower.
 #define INTERNAL_ERROR(what_arg) throw compiler::utils::InternalError(__FILE__, __LINE__, what_arg)
+#define INTERNAL_ASSERT(cond, what_arg) if(!(cond)) throw compiler::utils::InternalError(__FILE__, __LINE__, what_arg)
 
 namespace compiler::utils
 {
