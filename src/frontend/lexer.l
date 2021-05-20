@@ -38,7 +38,7 @@
 %option bison-bridge
 %option bison-locations
 
-white-space				[ \t\n]
+white-space				[ \t\n\r]
 
 identifier-nondigit		[A-Za-z_]
 identifier-digit		[0-9]
@@ -131,6 +131,8 @@ any-char				(.|\n)
 					yylval->emplace<int>() = _text_to_int(yytext);
 					return yytoken::UINT;
 				}
+
+.				; /* TODO: throw errors. */
 
 %%
 

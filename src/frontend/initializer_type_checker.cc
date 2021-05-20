@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include "semantic_checker.h"
 #include "fstring.h"

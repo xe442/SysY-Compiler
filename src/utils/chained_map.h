@@ -54,6 +54,23 @@ class ChainedMap
 		return std::nullopt;
 	}
 
+	typename std::optional<TVal> find(const TKey &key)
+	{
+		std::optional<MapIter> find_res = basic_find(key);
+		if(find_res.has_value())
+			return find_res.value()->second;
+		else
+			return std::nullopt;
+	}
+	typename std::optional<TVal> find(const TKey &key) const
+	{
+		std::optional<MapConstIter> find_res = basic_find(key);
+		if(find_res.has_value())
+			return find_res.value()->second;
+		else
+			return std::nullopt;
+	}
+
 	// Returns: the inserted position + whether the insertion is successful.
 	std::pair<MapIter, bool> basic_insert(const std::pair<TKey, TVal> &key_val_pair)
 	{
@@ -78,6 +95,15 @@ class ChainedMap
 		if(empty())
 			INTERNAL_ERROR("cannot insert element to an empty chained map");
 		return _table.back().insert(std::make_pair(std::move(key), std::move(val)));
+	}
+
+	bool insert(const TKey &key, const TVal &val)
+	{
+		return basic_insert(key, val).second;
+	}
+	bool insert(TKey &&key, TVal &&val)
+	{
+		return basic_insert(std::move(key), std::move(val));
 	}
 };
 

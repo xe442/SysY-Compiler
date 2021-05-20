@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include <iostream>
 #include "fstring.h"

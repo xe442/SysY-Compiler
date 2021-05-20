@@ -23,9 +23,9 @@ class SemanticChecker
 	// non-const ids.
 	struct ConstExprReplacer
 	{
-		const SymbolTable &table;
+		const SemanticSymbolTable &table;
 
-		ConstExprReplacer(SymbolTable &_table)
+		ConstExprReplacer(SemanticSymbolTable &_table)
 		  : table(_table) {}
 
 		define::AstPtr operator() (define::ConstIntNodePtr &node);
@@ -97,11 +97,11 @@ class SemanticChecker
 	// the expression. Does necessary constants optimization when needed.
 	struct TypeChecker
 	{
-		SymbolTable &table;
+		const SemanticSymbolTable &table;
 		bool optimize_constants; // TODO: implement optimize_constants.
 								 // This is currently not functional.
 
-		TypeChecker(SymbolTable &_table)
+		TypeChecker(SemanticSymbolTable &_table)
 		  : table(_table), optimize_constants(false) {}
 
 		define::TypePtr operator() (define::ConstIntNodePtr &node);
@@ -118,7 +118,7 @@ class SemanticChecker
 	};
 
   public:
-	SymbolTable table;
+	SemanticSymbolTable table;
 	ConstExprReplacer const_expr_replacer;
 	DeclTypeDeducer type_deducer;
 	TypeChecker type_checker;

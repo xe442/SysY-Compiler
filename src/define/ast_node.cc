@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include "exceptions.h"
 #include "visitor_helper.h"

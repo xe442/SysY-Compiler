@@ -10,42 +10,40 @@
 namespace compiler::frontend
 {
 
-struct SymbolTableEntry
+struct SemanticSymbolTableEntry
 {
 	define::TypePtr type;
 	std::optional<int> initial_val; // Only used for type = "const int".
 
   public:
-	SymbolTableEntry() = default;
-	SymbolTableEntry(const define::TypePtr &_type)
+	SemanticSymbolTableEntry() = default;
+	SemanticSymbolTableEntry(const define::TypePtr &_type)
 	  : type(_type), initial_val(std::nullopt) {}
-	SymbolTableEntry(define::TypePtr &&_type)
+	SemanticSymbolTableEntry(define::TypePtr &&_type)
 	  : type(_type), initial_val(std::nullopt) {}
-	SymbolTableEntry(const define::TypePtr &_type, int _initial_val)
+	SemanticSymbolTableEntry(const define::TypePtr &_type, int _initial_val)
 	  : type(_type), initial_val(_initial_val) {}
-	SymbolTableEntry(define::TypePtr &&_type, int _initial_val)
+	SemanticSymbolTableEntry(define::TypePtr &&_type, int _initial_val)
 	  : type(_type), initial_val(_initial_val) {}
 };
 
-class SymbolTable: public utils::ChainedMap<std::string, SymbolTableEntry>
+class SemanticSymbolTable: public utils::ChainedMap<std::string, SemanticSymbolTableEntry>
 {
-	static const std::vector<std::pair<std::string, SymbolTableEntry>> INTERNAL_FUNCTIONS;
+	static const std::vector<std::pair<std::string, SemanticSymbolTableEntry>> INTERNAL_FUNCTIONS;
 
   public:
-	SymbolTable();
+	SemanticSymbolTable();
 
-	std::optional<SymbolTableEntry> find(const std::string &name) const;
-	
 	template<class... Ts>
 	bool insert(const std::string &name, const Ts... ts)
 	{
-		return basic_insert(name, SymbolTableEntry(std::move(ts)...)).second;
+		return basic_insert(name, SemanticSymbolTableEntry(std::move(ts)...)).second;
 	}
 	
 	template<class... Ts>
 	bool insert(std::string &&name, const Ts... ts)
 	{
-		return basic_insert(name, SymbolTableEntry(std::move(ts)...)).second;
+		return basic_insert(name, SemanticSymbolTableEntry(std::move(ts)...)).second;
 	}
 };
 

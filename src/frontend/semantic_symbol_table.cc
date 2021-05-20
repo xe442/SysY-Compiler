@@ -18,29 +18,21 @@ namespace compiler::frontend
  * void starttime()
  * void stoptime()
  */
-const std::vector<std::pair<std::string, SymbolTableEntry>> SymbolTable::INTERNAL_FUNCTIONS = {
-	{ "getint", 	SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))													},
-	{ "getch", 		SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))													},
-	{ "getarray",	SymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec{make_shared<PointerType>(make_int())}))				},
-	{ "putint", 	SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
-	{ "putch", 		SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
-	{ "putarray",	SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int(), make_shared<PointerType>(make_int())}))	},
-	{ "starttime", 	SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													},
-	{ "stoptime", 	SymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													}
+const std::vector<std::pair<std::string, SemanticSymbolTableEntry>> SemanticSymbolTable::INTERNAL_FUNCTIONS = {
+	{ "getint", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))													},
+	{ "getch", 		SemanticSymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))													},
+	{ "getarray",	SemanticSymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec{make_shared<PointerType>(make_int())}))				},
+	{ "putint", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
+	{ "putch", 		SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
+	{ "putarray",	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int(), make_shared<PointerType>(make_int())}))	},
+	{ "starttime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													},
+	{ "stoptime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													}
 };
 
-SymbolTable::SymbolTable(): ChainedMap<std::string, SymbolTableEntry>()
+SemanticSymbolTable::SemanticSymbolTable(): ChainedMap<std::string, SemanticSymbolTableEntry>()
 {
 	for(const auto &predef_func : INTERNAL_FUNCTIONS)
 		basic_insert(predef_func);
-}
-
-std::optional<SymbolTableEntry> SymbolTable::find(const std::string &name) const
-{
-	auto find_res = basic_find(name);
-	if(!find_res.has_value())
-		return std::nullopt;
-	return find_res.value()->second;
 }
 
 } // namespace compiler::frontend

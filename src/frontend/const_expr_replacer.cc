@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include "ast_node_printer.h"
 #include <typeinfo>
@@ -22,7 +21,7 @@ void SemanticChecker::ConstExprReplacer::replace_expr(AstPtr &node)
 
 AstPtr SemanticChecker::ConstExprReplacer::operator() (ConstIntNodePtr &node)
 {
-	DEBUG(std::cout << "literal " << node->val() << std::endl);
+	DBG(std::cout << "literal " << node->val() << std::endl);
 	return std::move(node);
 }
 AstPtr SemanticChecker::ConstExprReplacer::operator() (IdNodePtr &node)
