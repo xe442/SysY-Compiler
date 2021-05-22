@@ -1,3 +1,4 @@
+#define DEBUG
 #include "dbg.h"
 #include <iostream>
 #include "exceptions.h"
@@ -27,24 +28,23 @@ void EeyoreGenerator::EeyoreRearranger::rearrange()
 			DBG(std::cout << "a func def statement" << std::endl);
 			if(std::get<FuncDefStmt>(stmt).func_name == "f_main") // main function
 				main_begin = iter;
-			func_begin = ++iter;
-				// we would insert DeclStmts after func_begin, but list::insert
-				// inserts an element before a certain position, so increase
-				// the position by 1.
-			continue;
+			func_begin = iter;
 		}
 		else if(holds_alternative<EndFuncDefStmt>(stmt))
 		{
 			DBG(std::cout << "a end func def statement" << std::endl);
-			func_begin = eeyore_code.end();
+			func_begin = eeyore_code.end(); // reset func_begin
 		}
 		else if(holds_alternative<DeclStmt>(stmt))
 		{
 			DBG(std::cout << "a decl statement" << std::endl);
 			if(func_begin != eeyore_code.end())
 			{
-				eeyore_code.insert(func_begin, stmt);
-				++func_begin;
+				func_begin = eeyore_code.insert(++func_begin, stmt);
+					// We would insert DeclStmts after func_begin, but list::insert
+					// inserts an element `before` a certain position, so increase
+					// the position by 1, then insert it, and finally reset func_begin
+					// to be the statement inserted.
 				iter = eeyore_code.erase(iter); // erase the stmt and forward iter
 				continue;
 			}
@@ -197,11 +197,21 @@ optional<Operand> EeyoreGenerator::operator() (const IdNodePtr &node)
 	{
 		TempVar offset_opr = resources.get_temp_var();
 		eeyore_code.emplace_back(DeclStmt(offset_opr));
+		if(state.in_loop())
+			// in case we use the same temp variable for several times in a loop
+			// set them to 0 before use them in a loop.
+			eeyore_code.emplace_back(MoveStmt(offset_opr, 0));
 
 		TypePtr type = find_res.value().type;
 		int const_offset = 0; // all the const offset are accumulated here.
-		for(const Operand &idx : state.access_idx())
+
+		const auto &access_idx = state.access_idx();
+		for(auto iter = access_idx.rbegin(); iter != access_idx.rend(); ++iter)
+			// The first index is added to access_idx last, so we visit the access_idx
+			// in reversed order.
 		{
+			Operand idx = *iter;
+
 			// Calculate the type and size of the element of array.
 			TypePtr element_type = make_null();
 			int element_size;
@@ -231,7 +241,7 @@ optional<Operand> EeyoreGenerator::operator() (const IdNodePtr &node)
 				eeyore_code.emplace_back(BinaryOpStmt(
 					tmp, idx, BinaryOpNode::MUL, element_size
 				));
-				eeyore_code.emplace_front(BinaryOpStmt(
+				eeyore_code.emplace_back(BinaryOpStmt(
 					offset_opr, offset_opr, BinaryOpNode::ADD, tmp
 				));
 			}
@@ -595,11 +605,13 @@ optional<Operand> EeyoreGenerator::operator() (const BinaryOpNodePtr &node)
 					auto opr2_ret = visit(*this, node->operand2());
 					if(opr2_ret.has_value())
 					{
-						Operand opr2_opr = opr1_ret.value();
+						Operand opr2_opr = opr2_ret.value();
 						eeyore_code.emplace_back(CondGotoStmt(
 							opr2_opr, BinaryOpNode::EQ, 0, state.false_label()
 						));
 					}
+
+					eeyore_code.emplace_back(GotoStmt(state.true_label()));
 				}
 				else if(node->op() == BinaryOpNode::OR)
 				{
@@ -626,6 +638,8 @@ optional<Operand> EeyoreGenerator::operator() (const BinaryOpNodePtr &node)
 							opr2_opr, BinaryOpNode::NE, 0, state.true_label()
 						));
 					}
+
+					eeyore_code.emplace_back(GotoStmt(state.false_label()));
 				}
 				return std::nullopt;
 			}
@@ -689,10 +703,21 @@ optional<Operand> EeyoreGenerator::operator() (const BinaryOpNodePtr &node)
 }
 
 // if structure:
-// 	 expr...
+//
+// 	 expr -> L1 or L2
 // L1:
 // 	 body
 // L2:
+
+// if-else structure:
+//
+//   expr -> L1 or L2
+// L1:
+//   if body
+//   goto L3
+// L2:
+//   else body
+// L3:
 optional<Operand> EeyoreGenerator::operator() (const IfNodePtr &node)
 {
 	Label ltrue = resources.get_label(), lfalse = resources.get_label();
@@ -705,12 +730,22 @@ optional<Operand> EeyoreGenerator::operator() (const IfNodePtr &node)
 			expr_ret.value(), BinaryOpNode::EQ, 0, lfalse
 		));
 	}
-
-	eeyore_code.emplace_back(LabelStmt(ltrue));
-	std::visit(*this, node->expr());
-	eeyore_code.emplace_back(LabelStmt(lfalse));
-
 	state.restore_true_false_label(prev_true_false_label);
+	eeyore_code.emplace_back(LabelStmt(ltrue));
+	std::visit(*this, node->if_body());
+
+	if(is_null_ast(node->else_body()))
+	{
+		eeyore_code.emplace_back(LabelStmt(lfalse));
+	}
+	else
+	{
+		Label lend = resources.get_label();
+		eeyore_code.emplace_back(GotoStmt(lend));
+		eeyore_code.emplace_back(LabelStmt(lfalse));
+		std::visit(*this, node->else_body());
+		eeyore_code.emplace_back(LabelStmt(lend));
+	}
 	return std::nullopt;
 }
 
@@ -719,15 +754,20 @@ optional<Operand> EeyoreGenerator::operator() (const IfNodePtr &node)
 // 	 expr...
 // L2:
 // 	 body
+//   goto L1
 // L3:
 optional<Operand> EeyoreGenerator::operator() (const WhileNodePtr &node)
 {
-	Label begin_loop = resources.get_label();
-	eeyore_code.emplace_back(LabelStmt(begin_loop));
-
+	Label lbegin = resources.get_label();
 	Label ltrue = resources.get_label(), lfalse = resources.get_label();
+	
+	eeyore_code.emplace_back(LabelStmt(lbegin));
+
 	auto prev_true_false_label = state.store_true_false_label();
+	auto prev_cont_break_label = state.store_cont_break_label();
 	state.set_true_false_label(ltrue, lfalse);
+	state.set_cont_break_label(lbegin, lfalse); // this statement is moved before visiting expr
+									// to correctly set the temp variables used in expr to 0
 	auto expr_ret = visit(*this, node->expr());
 	if(expr_ret.has_value())
 	{
@@ -736,11 +776,10 @@ optional<Operand> EeyoreGenerator::operator() (const WhileNodePtr &node)
 		));
 	}
 	state.restore_true_false_label(prev_true_false_label);
-
-	auto prev_cont_break_label = state.store_cont_break_label();
-	state.set_cont_break_label(begin_loop, lfalse);
+	
 	eeyore_code.emplace_back(LabelStmt(ltrue));
 	visit(*this, node->body());
+	eeyore_code.emplace_back(GotoStmt(lbegin));
 	eeyore_code.emplace_back(LabelStmt(lfalse));
 
 	state.restore_cont_break_label(prev_cont_break_label);
@@ -780,7 +819,9 @@ optional<Operand> EeyoreGenerator::operator() (const FuncCallNodePtr &node)
 	const std::string &id_name = node->actual_id()->name();
 	auto find_res = table.find(id_name);
 	INTERNAL_ASSERT(find_res.has_value(), "use of undefined function");
-	TypePtr retval_type = find_res.value().type;
+	TypePtr func_type = find_res.value().type;
+	INTERNAL_ASSERT(holds_alternative<FuncTypePtr>(func_type), "call of non-function type");
+	TypePtr retval_type = std::get<FuncTypePtr>(func_type)->retval_type();
 
 	INTERNAL_ASSERT(state.is_rval_mode(), "func call should not occur in lval");
 	bool write_mode = state.is_write_mode();

@@ -22,9 +22,11 @@
 	typedef yy::parser::semantic_type YYSTYPE;
 	typedef yy::parser::location_type YYLTYPE;
 
-	// Call yylex in C style, since it comes from lib flex.
 	extern "C"
+	{
 		int yylex(YYSTYPE *yylval,YYLTYPE *yylloc);
+		void set_input_file(const char *filename);
+	}
 }
 
 %define api.value.type variant // Set the type of lvals.

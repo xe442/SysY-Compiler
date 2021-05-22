@@ -29,7 +29,7 @@ lexer.yy.cc: lexer.l mkdir
 parser.tab.cc: parser.y mkdir
 	$(BISON) $(BISON_FLAGS) $<
 
-lexer.yy.o: lexer.yy.cc mkdir
+lexer.yy.o: lexer.yy.cc mkdir parser.tab.cc
 	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<
 
 parser.tab.o: parser.tab.cc mkdir
@@ -38,10 +38,7 @@ parser.tab.o: parser.tab.cc mkdir
 $(OBJS): %.o: %.cc lexer.yy.cc parser.tab.cc
 	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<
 
-main.o: ../main.cc parser.tab.cc
-	$(CC) $(CC_FLAGS) -I ./ -o ../../build/$@ $<
-
-all: lexer.yy.o parser.tab.o $(OBJS) main.o
+all: lexer.yy.o parser.tab.o $(OBJS)
 
 clean:
 	rm -f lexer.yy.cc parser.tab.cc parser.tab.h $(OUT_PATH)/*

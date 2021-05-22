@@ -149,7 +149,13 @@ class SemanticChecker
 	void operator() (define::BreakNodePtr &node);
 	void operator() (define::ContNodePtr &node);
 	void operator() (define::RetNodePtr &node);
-	template<class ExprNodePtr> void operator() (ExprNodePtr &node);
+
+	void operator() (define::ConstIntNodePtr &node);
+	void operator() (define::IdNodePtr &node);
+	void operator() (define::UnaryOpNodePtr &node);
+	void operator() (define::BinaryOpNodePtr &node);
+	void operator() (define::FuncCallNodePtr &node);
+	template<class ErrorNodePtr> void operator() (ErrorNodePtr &node);
 };
 
 } // namespace compiler::frontend

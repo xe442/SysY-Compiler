@@ -100,7 +100,8 @@ void SemanticChecker::operator() (SingleVarDeclNodePtr &node)
 	{
 		if(is_global() && is_null_ast(node->init_val()))
 			node->set_init_val(std::make_unique<InitializerNode>());
-		initilaizer_type_checker.check_type(node->init_val_(), id_type);
+		if(!is_null_ast(node->init_val()))
+			initilaizer_type_checker.check_type(node->init_val_(), id_type);
 	}
 }
 
@@ -226,11 +227,39 @@ void SemanticChecker::operator() (RetNodePtr &node)
 	}
 }
 
-template<class ExprNodePtr>
-void SemanticChecker::operator() (ExprNodePtr &node)
+void SemanticChecker::operator() (ConstIntNodePtr &node)
 {
 	// type_checker.optimize_constants = false;
-	type_checker(node); // call directly through operator()
+	type_checker(node);
+}
+void SemanticChecker::operator() (IdNodePtr &node)
+{
+	// type_checker.optimize_constants = false;
+	type_checker(node);
+}
+
+void SemanticChecker::operator() (UnaryOpNodePtr &node)
+{
+	// type_checker.optimize_constants = false;
+	type_checker(node);
+}
+
+void SemanticChecker::operator() (BinaryOpNodePtr &node)
+{
+	// type_checker.optimize_constants = false;
+	type_checker(node);
+}
+
+void SemanticChecker::operator() (FuncCallNodePtr &node)
+{
+	// type_checker.optimize_constants = false;
+	type_checker(node);
+}
+
+template<class ErrorNodePtr>
+void SemanticChecker::operator() (ErrorNodePtr &node)
+{
+	INTERNAL_ERROR("invalid call to semantic checker");
 }
 
 } // namespace compiler::frontend

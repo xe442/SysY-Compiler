@@ -1,6 +1,7 @@
 %{
 
 	#include <iostream>
+	#include <cctype>
 	#include "parser.tab.h"
 	
 	/* #define DEBUG */
@@ -35,6 +36,7 @@
 	int _text_to_int(const char *text);
 %}
 
+%option noyywrap
 %option bison-bridge
 %option bison-locations
 
@@ -161,7 +163,12 @@ int _text_to_int(const char *text)
 		if('0' <= *text && *text <='9')
 			res += *text - '0';
 		else
-			res += *text - 'A' + 10;
+			res += toupper(*text) - 'A' + 10;
 	}
 	return res;
+}
+
+void set_input_file(const char *filename)
+{
+	yyin = fopen(filename, "r");
 }

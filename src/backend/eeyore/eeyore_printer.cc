@@ -28,7 +28,15 @@ void OprPrinter::operator() (const int &var)
 
 void EeyorePrinter::operator() (const DeclStmt &stmt)
 {
-	out << "var " << stmt.var << endl;
+	out << "var ";
+	// for original variable, it may have a size
+	if(std::holds_alternative<OrigVar>(stmt.var))
+	{
+		OrigVar var = std::get<OrigVar>(stmt.var);
+		if(var.size != 4)
+			out << var.size << ' ';
+	}
+	out << stmt.var << endl;
 }
 
 void EeyorePrinter::operator() (const FuncDefStmt &stmt)
@@ -68,7 +76,8 @@ void EeyorePrinter::operator() (const GotoStmt &stmt)
 
 void EeyorePrinter::operator() (const CondGotoStmt &stmt)
 {
-	out << "if " << stmt.opr1 << ' ' << stmt.op << " goto l" << stmt.goto_label.id << endl;
+	out << "if " << stmt.opr1 << ' ' << stmt.op << ' ' << stmt.opr2
+		<< " goto l" << stmt.goto_label.id << endl;
 }
 
 void EeyorePrinter::operator() (const UnaryOpStmt &stmt)

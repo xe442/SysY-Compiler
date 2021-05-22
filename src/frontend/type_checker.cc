@@ -83,7 +83,7 @@ TypePtr SemanticChecker::TypeChecker::operator() (BinaryOpNodePtr &node)
 	}
 }
 
-TypePtr SemanticChecker::TypeChecker::operator() (define::FuncCallNodePtr &node)
+TypePtr SemanticChecker::TypeChecker::operator() (FuncCallNodePtr &node)
 {
 	if(!holds_alternative<IdNodePtr>(node->id()))
 		INTERNAL_ERROR("error type for id node of func call");

@@ -35,11 +35,8 @@ bool same_type(const TypePtr &type1, const TypePtr &type2)
 		[](const IntTypePtr &t1, const IntTypePtr &t2)
 			{ return t1->is_const() == t2->is_const(); },
 		[](const ArrayTypePtr &t1, const ArrayTypePtr &t2)
-			{
-				if(t1->len() != t2->len())
-					return false;
-				return same_type(t1->element_type(), t2->element_type());
-			},
+			{ return t1->len() == t2->len()
+				&& same_type(t1->element_type(), t2->element_type()); },
 		[](const PointerTypePtr &t1, const PointerTypePtr &t2)
 			{ return same_type(t1->base_type(), t2->base_type()); },
 		[](const auto &t1, const auto &t2) { return false; }
@@ -51,6 +48,9 @@ bool accept_type(const TypePtr &req_type, const TypePtr &prov_type)
 {
 	static LambdaVisitor type_checker = {
 		[](const IntTypePtr &t1, const IntTypePtr &t2) { return true; },
+		[](const ArrayTypePtr &t1, const ArrayTypePtr &t2)
+			{ return t1->len() == t2->len()
+				&& accept_type(t1->element_type(), t2->element_type()); },
 		[](const PointerTypePtr &t1, const ArrayTypePtr &t2)
 			{ return accept_type(t1->base_type(), t2->element_type()); },
 		[](const PointerTypePtr &t1, const PointerTypePtr &t2)
