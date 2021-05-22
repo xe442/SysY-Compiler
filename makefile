@@ -11,8 +11,8 @@ clean:
 
 
 #### TODO: platform build
-# this requires copying all the files to ./sim/ and build them all
+# Copying all the files to a single directory, namely ./sim/, and build them all.
 
-# copys all the ".h" and ".cc" files from ./src/* and to ./sim/
-sim_copy: flex_bison make_sim
+# Copys all the ".h" and ".cc" files from ./src/* and to ./sim/
+sim_copy:
 	find ./src -type f -regex ".*\.\(h\|cc\)" -exec cp {} ./sim \;
