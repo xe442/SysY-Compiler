@@ -18,4 +18,4 @@ all:
 	make main.o
 
 clean:
-	rm -rf ../build
+	rm -rf ../build/*
