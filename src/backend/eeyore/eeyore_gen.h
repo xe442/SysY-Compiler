@@ -152,17 +152,13 @@ class EeyoreGenerator
 	// moves global assignment to f_main.
 	class EeyoreRearranger
 	{
-		std::list<EeyoreStatement> &eeyore_code;
-
 	  public:
-		EeyoreRearranger(std::list<EeyoreStatement> &code)
-		  : eeyore_code(code) {}
-		void rearrange();
+		void rearrange(std::list<EeyoreStatement> &eeyore_code);
 	};
 	EeyoreRearranger rearranger;
 
   public:
-	EeyoreGenerator(): eeyore_code(), rearranger(eeyore_code) {}
+	EeyoreGenerator() = default;
 
 	// visitor methods, returning the value read.
 	std::optional<Operand> operator() (const define::ProgramNodePtr &node);

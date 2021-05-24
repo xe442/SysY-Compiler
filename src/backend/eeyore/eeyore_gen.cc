@@ -12,7 +12,7 @@ using namespace compiler::define;
 namespace compiler::backend::eeyore
 {
 
-void EeyoreGenerator::EeyoreRearranger::rearrange()
+void EeyoreGenerator::EeyoreRearranger::rearrange(std::list<EeyoreStatement> &eeyore_code)
 {
 	DBG(std::cout << std::endl << "rearrangement begin" << std::endl);
 	std::list<EeyoreStatement> global_assignments;
@@ -896,7 +896,7 @@ const std::list<EeyoreStatement> &EeyoreGenerator::generate_eeyore(const AstPtr 
 	std::visit(*this, ast);
 	DBG(std::cout << "end visiting" << std::endl);
 
-	rearranger.rearrange();
+	rearranger.rearrange(eeyore_code);
 	return eeyore_code;
 }
 
