@@ -157,6 +157,18 @@ class EeyoreGenerator
 	};
 	EeyoreRearranger rearranger;
 
+	// Optimize the generated eeyore_code locally.
+	class EeyoreOptimizer
+	{
+	  protected:
+		void _remove_useless_labels_and_jumps(
+			std::list<EeyoreStatement> &eeyore_code);
+		
+	  public:
+	  	void optimize(std::list<EeyoreStatement> &eeyore_code);
+	};
+	EeyoreOptimizer optimizer;
+
   public:
 	EeyoreGenerator() = default;
 

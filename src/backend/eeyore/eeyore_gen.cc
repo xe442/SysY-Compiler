@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include <iostream>
 #include "exceptions.h"
@@ -897,6 +896,7 @@ const std::list<EeyoreStatement> &EeyoreGenerator::generate_eeyore(const AstPtr 
 	DBG(std::cout << "end visiting" << std::endl);
 
 	rearranger.rearrange(eeyore_code);
+	optimizer.optimize(eeyore_code);
 	return eeyore_code;
 }
 
