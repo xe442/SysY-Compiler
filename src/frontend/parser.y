@@ -146,12 +146,12 @@ array_initializer: // InitializerNode
 array_initializer_list: // vector<IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode|InitializerNode>
   array_initializer_list[sublist] COMMA array_initializer
   		{
-  			$$ = std::move(std::move($sublist));
+  			$$ = std::move($sublist);
   			$$.push_back(std::move($array_initializer));
   		}
 | array_initializer_list[sublist] COMMA expr
 		{
-			$$ = std::move(std::move($sublist));
+			$$ = std::move($sublist);
 			$$.push_back(std::move($expr));
 		}
 | array_initializer
