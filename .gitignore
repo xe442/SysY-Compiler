@@ -5,3 +5,4 @@
 !/.gitignore
 
 src/line_counter.py
+src/utils/location.h
