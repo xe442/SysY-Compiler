@@ -5,14 +5,18 @@ CC = g++
 
 all:
 	cd ./src; make all
+	make linking
+
+linking:
 	cd ./build; find ./ -name "*.o" | xargs g++ -o compiler
+
 clean:
-	rm -rf ./build
+	cd ./src; make clean
 
 
 #### TODO: platform build
-# Copying all the files to a single directory, namely ./sim/, and build them all.
+# this requires copying all the files to ./sim/ and build them all
 
-# Copys all the ".h" and ".cc" files from ./src/* and to ./sim/
-sim_copy:
+# copys all the ".h" and ".cc" files from ./src/* and to ./sim/
+sim_copy: flex_bison make_sim
 	find ./src -type f -regex ".*\.\(h\|cc\)" -exec cp {} ./sim \;
