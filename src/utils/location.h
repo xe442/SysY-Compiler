@@ -31,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file location.hh
+ ** \file ../../utils/location.h
  ** Define the yy::location class.
  */
 
-#ifndef YY_YY_LOCATION_HH_INCLUDED
-# define YY_YY_LOCATION_HH_INCLUDED
+#ifndef YY_YY_UTILS_LOCATION_H_INCLUDED
+# define YY_YY_UTILS_LOCATION_H_INCLUDED
 
 # include <iostream>
 # include <string>
@@ -54,7 +54,7 @@
 # endif
 
 namespace yy {
-#line 58 "location.hh"
+#line 58 "../../utils/location.h"
 
   /// A point in a source file.
   class position
@@ -327,6 +327,6 @@ namespace yy {
   }
 
 } // yy
-#line 331 "location.hh"
+#line 331 "../../utils/location.h"
 
-#endif // !YY_YY_LOCATION_HH_INCLUDED
+#endif // !YY_YY_UTILS_LOCATION_H_INCLUDED

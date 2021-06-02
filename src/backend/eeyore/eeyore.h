@@ -14,21 +14,26 @@ struct Label
 	int id;
 	Label(int _id): id(_id) {}
 };
-struct OrigVar
+struct VarBase
 {
 	int id;
+	VarBase(int _id): id(_id) {}
+};
+struct OrigVar: public VarBase
+{
 	int size;
-	OrigVar(int _id, int _size=sizeof(int)): id(_id), size(_size) {}
+	OrigVar(int _id, int _size=sizeof(int)): VarBase(_id), size(_size) {}
+	bool operator == (const OrigVar &other) const { return id == other.id; }
 };
-struct TempVar
+struct TempVar: public VarBase
 {
-	int id;
-	TempVar(int _id): id(_id) {}
+	TempVar(int _id): VarBase(_id) {}
+	bool operator == (const TempVar &other) const { return id == other.id; }
 };
-struct Param
+struct Param: public VarBase
 {
-	int id;
-	Param(int _id): id(_id) {}
+	Param(int _id): VarBase(_id) {}
+	bool operator == (const Param &other) const { return id == other.id; }
 };
 using Operand = std::variant<int, OrigVar, TempVar, Param>;
 
@@ -162,6 +167,39 @@ using EeyoreStatement = std::variant
 	LabelStmt
 >;
 
+std::vector<Operand> used_vars(const EeyoreStatement &stmt);
+std::vector<Operand> defined_vars(const EeyoreStatement &stmt);
+
 } // namespace compiler::backend::eeyore
+
+namespace std
+{
+
+template<>
+struct hash<class compiler::backend::eeyore::OrigVar>
+{
+	size_t operator() (const compiler::backend::eeyore::OrigVar &var)
+	{
+		return hash<int>()(var.id);
+	}
+};
+template<>
+struct hash<class compiler::backend::eeyore::TempVar>
+{
+	size_t operator() (const compiler::backend::eeyore::TempVar &var)
+	{
+		return hash<int>()(var.id);
+	}
+};
+template<>
+struct hash<class compiler::backend::eeyore::Param>
+{
+	size_t operator() (const compiler::backend::eeyore::Param &var)
+	{
+		return hash<int>()(var.id);
+	}
+};
+
+}
 
 #endif

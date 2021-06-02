@@ -108,8 +108,17 @@ void EeyoreGenerator::EeyoreOptimizer::_remove_useless_labels_and_jumps(
 	DBG(std::cout << "step 2 completed" << std::endl);
 
 	// step 3 & 4.
-	for(StmtPtr jump_stmt_ptr : jump_stmts)
+	for(auto iter = jump_stmts.crbegin(); iter != jump_stmts.crend(); ++iter)
+		// Here we remove the goto statements from back to front, because there
+		// may be cases like:
+		//  " goto l1
+		//    goto l2
+		//   l1:      "
+		// In this case, removing staements from back to front first removes
+		// "goto l2", and then "goto l1". But if removing statements from the
+		// front, only "goto l2" is removed.
 	{
+		StmtPtr jump_stmt_ptr = *iter;
 		int label_id = std::visit(label_id_getter, *jump_stmt_ptr);
 		bool useless = false;
 

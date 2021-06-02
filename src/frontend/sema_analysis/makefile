@@ -1,8 +1,9 @@
-OUT_PATH := ../../build/define
-UTILS_PATH := ../utils
+OUT_PATH := ../../../build/frontend/sema_analysis
+UTILS_PATH := ../../utils
+SYNTAX_ANALYSIS_PATH := ../syntax_analysis
 
-CC := g++
-CC_FLAGS := -c -std=c++17 -I $(UTILS_PATH)
+CC := g++ -I $(UTILS_PATH) -I $(SYNTAX_ANALYSIS_PATH)
+CC_FLAGS := -c -std=c++17
 
 SRCS := $(wildcard *.cc)
 OBJS := $(patsubst %.cc, %.o, $(SRCS))

@@ -4,7 +4,7 @@
 
 %defines "parser.tab.h" // Generate a header file with specific filename.
 %locations // Track token locations.
-%define api.location.file "../utils/location.h"
+%define api.location.file "../../utils/location.h"
 
 %parse-param {compiler::define::AstPtr &prog_node}
 

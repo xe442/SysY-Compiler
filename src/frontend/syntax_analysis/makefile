@@ -1,9 +1,8 @@
-OUT_PATH := ../../build/frontend
-UTILS_PATH := ../utils
-DEFINE_PATH := ../define
+OUT_PATH := ../../../build/frontend/syntax_analysis
+UTILS_PATH := ../../utils
 
 CC := g++
-CC_FLAGS := -c -lfl -std=c++17 -I $(UTILS_PATH) -I $(DEFINE_PATH)
+CC_FLAGS := -c -lfl -std=c++17 -I $(UTILS_PATH)
 
 FLEX := flex
 FLEX_FLAGS :=
@@ -29,21 +28,15 @@ lexer.yy.cc: lexer.l mkdir
 parser.tab.cc: parser.y mkdir
 	$(BISON) $(BISON_FLAGS) $<
 
-lexer.yy.o: lexer.yy.cc mkdir parser.tab.cc
-	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<
+lexer_parser: lexer.yy.cc parser.tab.cc
 
-parser.tab.o: parser.tab.cc mkdir
-	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<
+lexer_parser_clean:
+	rm -f lexer.yy.cc parser.tab.h parser.tab.cc $(UTILS_PATH)/location.h
 
-$(OBJS): %.o: %.cc lexer.yy.cc parser.tab.cc
+$(OBJS): %.o: %.cc
 	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<
 
 all: lexer.yy.o parser.tab.o $(OBJS)
-
-clean:
-	rm -f lexer.yy.cc parser.tab.cc parser.tab.h $(OUT_PATH)/*
-
-# utils:
 
 # graphics: parser.y
 #	$(BISON) $(BISON_FLAGS) -g -o $@ $^
