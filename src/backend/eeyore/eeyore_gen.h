@@ -17,19 +17,19 @@ class EeyoreGenerator
 	// Register allocation part.
 	class ResourceManager
 	{
-		int _orig_id;
-		int _temp_id;
-		int _label_id;
-
 	  public:
-		ResourceManager(): _orig_id(0), _temp_id(0), _label_id(0) {}
+		int orig_id;
+		int temp_id;
+		int label_id;
+
+		ResourceManager(): orig_id(0), temp_id(0), label_id(0) {}
 		
 		inline OrigVar get_original_var(int _size=sizeof(int))
-			{ return OrigVar(_orig_id++, _size); }
+			{ return OrigVar(orig_id++, _size); }
 		inline TempVar get_temp_var()
-			{ return TempVar(_temp_id++); }
+			{ return TempVar(temp_id++); }
 		inline Label get_label()
-			{ return Label(_label_id++); }
+			{ return Label(label_id++); }
 	};
 	ResourceManager resources;
 
@@ -147,9 +147,10 @@ class EeyoreGenerator
 	// the generated statements are stored here.
 	std::list<EeyoreStatement> eeyore_code;
 
-	// Rearranges the code generated.
-	// Moves variable definition forward to the beginning of a function, and
-	// moves global assignment to f_main.
+	// Rearranges the code generated. It Moves:
+	// variable definition forward to the beginning of a function, and
+	// global definition to the begging of the program, and
+	// global assignment to the beginning of f_main.
 	class EeyoreRearranger
 	{
 	  public:
@@ -195,6 +196,7 @@ class EeyoreGenerator
 
 	// Main entrance of this class.
 	const std::list<EeyoreStatement> &generate_eeyore(const define::AstPtr &ast);
+	std::vector<Operand> all_defined_vars();
 };
 
 }

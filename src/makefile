@@ -1,12 +1,12 @@
 OUT_PATH := ../build
 UTILS_PATH := ./utils
-DEFINE_PATH := ./define
-FRONTEND_PATH := ./frontend
+FRONTEND_SYNTAX_ANALYSIS_PATH := ./frontend/syntax_analysis
+FRONTEND_SEMA_ANALYSIS_PATH := ./frontend/sema_analysis
 BACKEND_EEYORE_PATH := ./backend/eeyore
 BACKEND_TIGGER_RISCV_PATH := ./backend/tigger_riscv
 
 CC := g++
-CC_FLAGS := -c -lfl -std=c++17 -I $(UTILS_PATH) -I $(DEFINE_PATH) -I $(FRONTEND_PATH) -I $(BACKEND_EEYORE_PATH) -I $(BACKEND_TIGGER_RISCV_PATH)
+CC_FLAGS := -c -lfl -std=c++17 -I $(UTILS_PATH) -I $(FRONTEND_SYNTAX_ANALYSIS_PATH) -I $(FRONTEND_SEMA_ANALYSIS_PATH) -I $(BACKEND_EEYORE_PATH) -I $(BACKEND_TIGGER_RISCV_PATH)
 
 main.o: main.cc
 	$(CC) $(CC_FLAGS) -o $(OUT_PATH)/$@ $<

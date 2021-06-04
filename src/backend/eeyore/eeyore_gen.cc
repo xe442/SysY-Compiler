@@ -15,9 +15,29 @@ void EeyoreGenerator::EeyoreRearranger::rearrange(std::list<EeyoreStatement> &ee
 {
 	DBG(std::cout << std::endl << "rearrangement begin" << std::endl);
 	std::list<EeyoreStatement> global_assignments;
-	std::list<EeyoreStatement>::iterator
-	func_begin = eeyore_code.end(), main_begin = eeyore_code.end();
-	for(auto iter = eeyore_code.begin(); iter != eeyore_code.end(); )
+	auto func_begin = eeyore_code.end(),
+		 main_begin = eeyore_code.end(),
+		 global_def_end = eeyore_code.end();
+	
+	auto iter = eeyore_code.begin();
+
+	// Find the end of the global definition part. All the global definitions
+	// that occurs later are moved to here.
+	if(holds_alternative<DeclStmt>(*(eeyore_code.begin())))
+	{
+		for(++iter; iter != eeyore_code.end(); ++iter)
+		{
+			DBG(std::cout << "pre-analyzing: " << *iter);
+			if(!holds_alternative<DeclStmt>(*iter))
+			{
+				global_def_end = iter;
+				--global_def_end;
+				break;
+			}
+		}
+	}
+
+	while(iter != eeyore_code.end())
 	{
 		DBG(std::cout << "analyzing: " << *iter);
 
@@ -45,8 +65,16 @@ void EeyoreGenerator::EeyoreRearranger::rearrange(std::list<EeyoreStatement> &ee
 					// the position by 1, then insert it, and finally reset func_begin
 					// to be the statement inserted.
 				iter = eeyore_code.erase(iter); // erase the stmt and forward iter
-				continue;
 			}
+			else // A global DeclStmt, move it before global_def_end. 
+			{
+				if(global_def_end == eeyore_code.end()) // No global declaration at the beginning.
+					global_def_end = eeyore_code.insert(eeyore_code.begin(), stmt);
+				else
+					global_def_end = eeyore_code.insert(++global_def_end, stmt);
+				iter = eeyore_code.erase(iter);
+			}
+			continue;
 		}
 		else if(func_begin == eeyore_code.end()) // non-decl statement in global, it must be a global assignment statement.
 		{
@@ -898,6 +926,27 @@ const std::list<EeyoreStatement> &EeyoreGenerator::generate_eeyore(const AstPtr 
 	rearranger.rearrange(eeyore_code);
 	optimizer.optimize(eeyore_code);
 	return eeyore_code;
+}
+
+std::vector<Operand> EeyoreGenerator::all_defined_vars()
+{
+	std::vector<Operand> vars;
+	for(int i = 0; i < resources.orig_id; i++)
+		vars.emplace_back(OrigVar(i));
+	for(int i = 0; i < resources.temp_id; i++)
+		vars.emplace_back(TempVar(i));
+	
+	// Find the largest function argument to determine used parameter count.
+	int max_param_cnt = 0;
+	for(const auto &stmt : eeyore_code)
+		if(holds_alternative<FuncDefStmt>(stmt))
+		{
+			const auto &func_def_stmt = std::get<FuncDefStmt>(stmt);
+			max_param_cnt = std::max(max_param_cnt, func_def_stmt.arg_cnt);
+		}
+	for(int i = 0; i < max_param_cnt; i++)
+		vars.emplace_back(Param(i));
+	return vars;
 }
 
 } // namespace compiler::backend::eeyore
