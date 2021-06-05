@@ -9,7 +9,6 @@ using std::visit;
 using std::holds_alternative;
 using std::make_unique;
 using compiler::utils::fstring;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {

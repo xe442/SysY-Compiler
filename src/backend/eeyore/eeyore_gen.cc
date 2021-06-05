@@ -6,7 +6,7 @@
 
 using std::optional;
 using std::holds_alternative;
-using namespace compiler::define;
+using namespace compiler::frontend;
 
 namespace compiler::backend::eeyore
 {

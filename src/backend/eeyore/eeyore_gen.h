@@ -127,13 +127,13 @@ class EeyoreGenerator
 	
 	  protected:
 	  	// For initializer matching. This holds the type of the initializer that is matching.
-	  	std::optional<define::TypePtr> curr_type;
+	  	std::optional<frontend::TypePtr> curr_type;
 	
 	  public:
-	  	inline define::TypePtr arr_type() const { return curr_type.value(); }
-		inline void set_arr_type(define::TypePtr arr_type) { curr_type = arr_type; }
+	  	inline frontend::TypePtr arr_type() const { return curr_type.value(); }
+		inline void set_arr_type(frontend::TypePtr arr_type) { curr_type = arr_type; }
 		inline void reset_arr_type() { curr_type.reset(); }
-	  	inline void set_initializer_write(define::TypePtr arr_type)
+	  	inline void set_initializer_write(frontend::TypePtr arr_type)
 			{ set_arr_offset(0); curr_type = arr_type; }
 		inline void reset_initializer_write()
 			{ reset_arr_offset(); curr_type.reset(); }
@@ -174,28 +174,28 @@ class EeyoreGenerator
 	EeyoreGenerator() = default;
 
 	// visitor methods, returning the value read.
-	std::optional<Operand> operator() (const define::ProgramNodePtr &node);
-	std::optional<Operand> operator() (const define::VarDeclNodePtr &node);
-	std::optional<Operand> operator() (const define::SingleVarDeclNodePtr &node);
-	std::optional<Operand> operator() (const define::ConstIntNodePtr &node);
-	std::optional<Operand> operator() (const define::IdNodePtr &node);
-	std::optional<Operand> operator() (const define::InitializerNodePtr &node);
-	std::optional<Operand> operator() (const define::FuncDefNodePtr &node);
-	std::optional<Operand> operator() (const define::BlockNodePtr &node);
-	std::optional<Operand> operator() (const define::UnaryOpNodePtr &node);
-	std::optional<Operand> operator() (const define::BinaryOpNodePtr &node);
-	std::optional<Operand> operator() (const define::IfNodePtr &node);
-	std::optional<Operand> operator() (const define::WhileNodePtr &node);
-	std::optional<Operand> operator() (const define::BreakNodePtr &node);
-	std::optional<Operand> operator() (const define::ContNodePtr &node);
-	std::optional<Operand> operator() (const define::RetNodePtr &node);
-	std::optional<Operand> operator() (const define::FuncCallNodePtr &node);
+	std::optional<Operand> operator() (const frontend::ProgramNodePtr &node);
+	std::optional<Operand> operator() (const frontend::VarDeclNodePtr &node);
+	std::optional<Operand> operator() (const frontend::SingleVarDeclNodePtr &node);
+	std::optional<Operand> operator() (const frontend::ConstIntNodePtr &node);
+	std::optional<Operand> operator() (const frontend::IdNodePtr &node);
+	std::optional<Operand> operator() (const frontend::InitializerNodePtr &node);
+	std::optional<Operand> operator() (const frontend::FuncDefNodePtr &node);
+	std::optional<Operand> operator() (const frontend::BlockNodePtr &node);
+	std::optional<Operand> operator() (const frontend::UnaryOpNodePtr &node);
+	std::optional<Operand> operator() (const frontend::BinaryOpNodePtr &node);
+	std::optional<Operand> operator() (const frontend::IfNodePtr &node);
+	std::optional<Operand> operator() (const frontend::WhileNodePtr &node);
+	std::optional<Operand> operator() (const frontend::BreakNodePtr &node);
+	std::optional<Operand> operator() (const frontend::ContNodePtr &node);
+	std::optional<Operand> operator() (const frontend::RetNodePtr &node);
+	std::optional<Operand> operator() (const frontend::FuncCallNodePtr &node);
 
 	template<class NodePtr> // other nodes do not generate any code.
 	std::optional<Operand> operator() (const NodePtr &node);
 
 	// Main entrance of this class.
-	const std::list<EeyoreStatement> &generate_eeyore(const define::AstPtr &ast);
+	const std::list<EeyoreStatement> &generate_eeyore(const frontend::AstPtr &ast);
 	std::vector<Operand> all_defined_vars();
 };
 

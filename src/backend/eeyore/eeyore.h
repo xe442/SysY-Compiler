@@ -94,30 +94,30 @@ struct GotoStmt
 };
 struct CondGotoStmt
 {
-	define::BinaryOpNode::OpType op;
+	frontend::BinaryOpNode::OpType op;
 	Operand opr1, opr2;
 	Label goto_label;
 
-	CondGotoStmt(Operand _opr1, define::BinaryOpNode::OpType _op, Operand _opr2, Label _goto_label)
+	CondGotoStmt(Operand _opr1, frontend::BinaryOpNode::OpType _op, Operand _opr2, Label _goto_label)
 	  : op(_op), opr1(_opr1), opr2(_opr2), goto_label(_goto_label) {}
 };
 
 struct UnaryOpStmt
 {
 	// opr = op_type opr1
-	define::UnaryOpNode::OpType op_type;
+	frontend::UnaryOpNode::OpType op_type;
 	Operand opr, opr1;
 
-	UnaryOpStmt(Operand _opr, define::UnaryOpNode::OpType _op_type, Operand _opr1)
+	UnaryOpStmt(Operand _opr, frontend::UnaryOpNode::OpType _op_type, Operand _opr1)
 	  : op_type(_op_type), opr(_opr), opr1(_opr1) {}
 };
 struct BinaryOpStmt
 {
 	// opr = opr1 op_type opr2
-	define::BinaryOpNode::OpType op_type;
+	frontend::BinaryOpNode::OpType op_type;
 	Operand opr, opr1, opr2;
 
-	BinaryOpStmt(Operand _opr, Operand _opr1, define::BinaryOpNode::OpType _op_type, Operand _opr2)
+	BinaryOpStmt(Operand _opr, Operand _opr1, frontend::BinaryOpNode::OpType _op_type, Operand _opr2)
 	  : op_type(_op_type), opr(_opr), opr1(_opr1), opr2(_opr2) {}
 };
 struct MoveStmt

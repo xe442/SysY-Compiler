@@ -4,7 +4,7 @@
 
 using compiler::utils::LambdaVisitor;
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 bool is_const(const TypePtr &type)
@@ -179,10 +179,10 @@ void TypePrinter::operator() (const FuncTypePtr &t)
 	std::visit(*this, t->retval_type());
 }
 
-} // compiler::define
+} // compiler::frontend
 
-std::ostream &operator << (std::ostream &out, const compiler::define::TypePtr &type)
+std::ostream &operator << (std::ostream &out, const compiler::frontend::TypePtr &type)
 {
-	std::visit(compiler::define::TypePrinter{out}, type);
+	std::visit(compiler::frontend::TypePrinter{out}, type);
 	return out;
 }

@@ -2,7 +2,6 @@
 #include "semantic_symbol_table.h"
 
 using std::make_shared;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {

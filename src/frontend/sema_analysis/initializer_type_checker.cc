@@ -5,7 +5,6 @@
 
 using std::visit;
 using compiler::utils::fstring;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {
@@ -83,7 +82,7 @@ bool SemanticChecker::InitializerTypeChecker::operator() (const ArrayTypePtr &ar
 	return false;
 }
 
-bool SemanticChecker::InitializerTypeChecker::operator() (const define::IntTypePtr &ele_type)
+bool SemanticChecker::InitializerTypeChecker::operator() (const IntTypePtr &ele_type)
 {
 	if(_idx == _parent_ptr->children_cnt()) // exhaused
 		return true;

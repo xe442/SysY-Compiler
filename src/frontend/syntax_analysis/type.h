@@ -6,7 +6,7 @@
 #include <vector>
 #include <variant>
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 // Type base class. The types of symbols are filled during sematic analysis.
@@ -156,8 +156,8 @@ struct TypePrinter
 	void operator() (const FuncTypePtr &t);
 };
 
-} // namespace compiler::define
+} // namespace compiler::frontend
 
-std::ostream &operator << (std::ostream &out, const compiler::define::TypePtr &type);
+std::ostream &operator << (std::ostream &out, const compiler::frontend::TypePtr &type);
 
 #endif

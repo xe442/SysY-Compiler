@@ -6,7 +6,7 @@
 
 using compiler::utils::LambdaVisitor;
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 VarDeclNode::VarDeclNode(TypePtr base_type, AstPtrVec &&definitions)
@@ -154,4 +154,4 @@ FuncArgsNode::FuncArgsNode(AstPtrVec &&args)
 	DBG(std::cout << "FuncArgsNode built!" << std::endl);
 }
 
-} // namespace compiler::define
+} // namespace compiler::frontend

@@ -6,7 +6,6 @@
 using std::visit;
 using std::holds_alternative;
 using compiler::utils::fstring;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {

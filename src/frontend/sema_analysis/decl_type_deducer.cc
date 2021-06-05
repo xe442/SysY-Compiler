@@ -4,7 +4,6 @@
 #include "semantic_checker.h"
 
 using compiler::utils::fstring;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {

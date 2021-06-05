@@ -6,7 +6,7 @@
 #include "exceptions.h"
 #include "ast_node.h"
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 struct AstNodePrinter
@@ -46,11 +46,11 @@ struct AstNodePrinter
 	void operator() (const FuncArgsNodePtr &node);
 };
 
-} // namespace compiler::define
+} // namespace compiler::frontend
 
-std::ostream &operator << (std::ostream &out, const compiler::define::UnaryOpNode::OpType &op_type);
-std::ostream &operator << (std::ostream &out, const compiler::define::BinaryOpNode::OpType &op_type);
-std::ostream &operator << (std::ostream &out, const compiler::define::AstNodePrinter::Indent &indent);
-std::ostream &operator << (std::ostream &out, const compiler::define::AstPtr &node);
+std::ostream &operator << (std::ostream &out, const compiler::frontend::UnaryOpNode::OpType &op_type);
+std::ostream &operator << (std::ostream &out, const compiler::frontend::BinaryOpNode::OpType &op_type);
+std::ostream &operator << (std::ostream &out, const compiler::frontend::AstNodePrinter::Indent &indent);
+std::ostream &operator << (std::ostream &out, const compiler::frontend::AstPtr &node);
 
 #endif

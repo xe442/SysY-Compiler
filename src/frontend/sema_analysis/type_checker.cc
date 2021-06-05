@@ -5,7 +5,6 @@
 
 using std::holds_alternative;
 using compiler::utils::fstring;
-using namespace compiler::define;
 
 namespace compiler::frontend
 {
@@ -130,7 +129,7 @@ TypePtr SemanticChecker::TypeChecker::operator() (ErrorType &node)
 }
 
 TypePtr SemanticChecker::TypeChecker::check_type(
-	define::AstPtr &expr_node, bool optimize_constants)
+	frontend::AstPtr &expr_node, bool optimize_constants)
 {
 	return std::visit(*this, expr_node);
 }

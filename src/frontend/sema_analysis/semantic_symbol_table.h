@@ -12,18 +12,18 @@ namespace compiler::frontend
 
 struct SemanticSymbolTableEntry
 {
-	define::TypePtr type;
+	TypePtr type;
 	std::optional<int> initial_val; // Only used for type = "const int".
 
   public:
 	SemanticSymbolTableEntry() = default;
-	SemanticSymbolTableEntry(const define::TypePtr &_type)
+	SemanticSymbolTableEntry(const TypePtr &_type)
 	  : type(_type), initial_val(std::nullopt) {}
-	SemanticSymbolTableEntry(define::TypePtr &&_type)
+	SemanticSymbolTableEntry(TypePtr &&_type)
 	  : type(_type), initial_val(std::nullopt) {}
-	SemanticSymbolTableEntry(const define::TypePtr &_type, int _initial_val)
+	SemanticSymbolTableEntry(const TypePtr &_type, int _initial_val)
 	  : type(_type), initial_val(_initial_val) {}
-	SemanticSymbolTableEntry(define::TypePtr &&_type, int _initial_val)
+	SemanticSymbolTableEntry(TypePtr &&_type, int _initial_val)
 	  : type(_type), initial_val(_initial_val) {}
 };
 

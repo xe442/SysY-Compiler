@@ -12,12 +12,12 @@ struct EeyoreSymbolTableEntry
 {
 	using VarType = std::variant<std::monostate, OrigVar, Param>;
 
-	define::TypePtr type;
+	frontend::TypePtr type;
 	VarType var;
 
-	EeyoreSymbolTableEntry(const define::TypePtr &_type, const VarType &_var=std::monostate())
+	EeyoreSymbolTableEntry(const frontend::TypePtr &_type, const VarType &_var=std::monostate())
 	  : type(_type), var(_var) {}
-	EeyoreSymbolTableEntry(define::TypePtr &&_type, VarType &&_var=std::monostate())
+	EeyoreSymbolTableEntry(frontend::TypePtr &&_type, VarType &&_var=std::monostate())
 	  : type(_type), var(_var) {}
 };
 

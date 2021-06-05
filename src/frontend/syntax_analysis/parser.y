@@ -6,7 +6,7 @@
 %locations // Track token locations.
 %define api.location.file "../../utils/location.h"
 
-%parse-param {compiler::define::AstPtr &prog_node}
+%parse-param {compiler::frontend::AstPtr &prog_node}
 
 %code requires
 {
@@ -43,14 +43,14 @@
 // The unused non-terminal retval type.
 %nterm<int> program
 
-%nterm<compiler::define::AstPtr> 
+%nterm<compiler::frontend::AstPtr> 
 		var_decl single_var_decl array_initializer func_def func_def_params
 		func_def_param arr_param_decl block block_item statement assign_statement
 		if_statement while_statement return_statement break_statement cont_statement
 		expr array_access func_call func_args
-%nterm<compiler::define::AstPtrVec>
+%nterm<compiler::frontend::AstPtrVec>
 		var_decl_list array_initializer_list block_item_list
-%nterm<compiler::define::TypePtr> base_type
+%nterm<compiler::frontend::TypePtr> base_type
 
 %precedence IF
 %precedence ELSE // Make the precedence of ELSE statement higher than IF.
@@ -64,15 +64,15 @@
 %%
 
 program: // ProgramNode
-  %empty { prog_node = std::make_unique<compiler::define::ProgramNode>(); }
+  %empty { prog_node = std::make_unique<compiler::frontend::ProgramNode>(); }
 | program var_decl
 		{
-			std::get<compiler::define::ProgramNodePtr>(prog_node)->push_back(
+			std::get<compiler::frontend::ProgramNodePtr>(prog_node)->push_back(
 				std::move($var_decl));
 		}
 | program func_def
 		{
-			std::get<compiler::define::ProgramNodePtr>(prog_node)->push_back(
+			std::get<compiler::frontend::ProgramNodePtr>(prog_node)->push_back(
 				std::move($func_def));
 		}
 ;
@@ -81,7 +81,7 @@ program: // ProgramNode
 var_decl: // VarDeclNode
   base_type var_decl_list SEMI
 		{
-			$$ = std::make_unique<compiler::define::VarDeclNode>(
+			$$ = std::make_unique<compiler::frontend::VarDeclNode>(
 				std::move($base_type), std::move($var_decl_list)
 			);
 		}
@@ -96,7 +96,7 @@ var_decl_list: // vector<SingleVarDeclNode>
 		}
 | single_var_decl
 		{
-			$$ = compiler::define::AstPtrVec();
+			$$ = compiler::frontend::AstPtrVec();
 			$$.push_back(std::move($single_var_decl));
 		}
 ;
@@ -105,23 +105,23 @@ var_decl_list: // vector<SingleVarDeclNode>
 // e.g. "a = b" or "b[3] = {a, 2 * a}"
 single_var_decl: // SingleVarDeclNode
   ID	{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::SingleVarDeclNode>(std::move(id_node));
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::SingleVarDeclNode>(std::move(id_node));
   		}
 | ID ASSIGN expr
 		{
-			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-			$$ = std::make_unique<compiler::define::SingleVarDeclNode>(
+			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+			$$ = std::make_unique<compiler::frontend::SingleVarDeclNode>(
 				std::move(id_node), std::move($expr)
 			);
 		}
 | array_access
 		{
-			$$ = std::make_unique<compiler::define::SingleVarDeclNode>(std::move($array_access));
+			$$ = std::make_unique<compiler::frontend::SingleVarDeclNode>(std::move($array_access));
 		}
 | array_access ASSIGN array_initializer
 		{
-			$$ = std::make_unique<compiler::define::SingleVarDeclNode>(
+			$$ = std::make_unique<compiler::frontend::SingleVarDeclNode>(
 				std::move($array_access), std::move($array_initializer)
 			);
 		}
@@ -131,13 +131,13 @@ single_var_decl: // SingleVarDeclNode
 array_initializer: // InitializerNode
   LCBRKT array_initializer_list RCBRKT
   		{
-  			$$ = std::make_unique<compiler::define::InitializerNode>(
+  			$$ = std::make_unique<compiler::frontend::InitializerNode>(
   				std::move($array_initializer_list), @array_initializer_list
   			);
   		}
 | LCBRKT RCBRKT
 		{
-			$$ = std::make_unique<compiler::define::InitializerNode>(@LCBRKT);
+			$$ = std::make_unique<compiler::frontend::InitializerNode>(@LCBRKT);
 		}
 ;
 
@@ -156,12 +156,12 @@ array_initializer_list: // vector<IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|F
 		}
 | array_initializer
 		{
-			$$ = compiler::define::AstPtrVec();
+			$$ = compiler::frontend::AstPtrVec();
 			$$.push_back(std::move($array_initializer));
 		}
 | expr
 		{
-			$$ = compiler::define::AstPtrVec();
+			$$ = compiler::frontend::AstPtrVec();
 			$$.push_back(std::move($expr));
 		}
 ;
@@ -170,16 +170,16 @@ array_initializer_list: // vector<IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|F
 func_def: // FuncDefNode
   base_type ID LBRKT func_def_params RBRKT block
   		{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::FuncDefNode>(
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::FuncDefNode>(
   				$base_type, std::move(id_node), std::move($func_def_params),
   				std::move($block)
   			);
   		}
 | base_type ID LBRKT RBRKT block
 		{
-			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-			$$ = std::make_unique<compiler::define::FuncDefNode>(
+			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+			$$ = std::make_unique<compiler::frontend::FuncDefNode>(
 				$base_type, std::move(id_node), std::move($block)
 			);
 		}
@@ -190,13 +190,13 @@ func_def_params: // FuncParamsNode
   func_def_params[sublist] COMMA func_def_param
   		{
   			$$ = std::move($sublist);
-  			std::get<compiler::define::FuncParamsNodePtr>($$)->push_back(
+  			std::get<compiler::frontend::FuncParamsNodePtr>($$)->push_back(
 				std::move($func_def_param));
   		}
 | func_def_param
 		{
-			$$ = std::make_unique<compiler::define::FuncParamsNode>();
-			std::get<compiler::define::FuncParamsNodePtr>($$)->push_back(
+			$$ = std::make_unique<compiler::frontend::FuncParamsNode>();
+			std::get<compiler::frontend::FuncParamsNodePtr>($$)->push_back(
 				std::move($func_def_param));
 		}
 ;
@@ -205,14 +205,14 @@ func_def_params: // FuncParamsNode
 func_def_param: // SingleFuncParamNode
   base_type ID
   		{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::SingleFuncParamNode>(
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::SingleFuncParamNode>(
   				$base_type, std::move(id_node)
   			);
   		}
 | base_type arr_param_decl
 		{
-			$$ = std::make_unique<compiler::define::SingleFuncParamNode>(
+			$$ = std::make_unique<compiler::frontend::SingleFuncParamNode>(
 				$base_type, std::move($arr_param_decl)
 			);
 		}
@@ -222,16 +222,16 @@ func_def_param: // SingleFuncParamNode
 arr_param_decl: // BinaryOpNode(ACCESS only)|UnaryOpNode(POINTER only)
   ID LSBRKT RSBRKT
   		{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::UnaryOpNode>(
-  				compiler::define::UnaryOpNode::POINTER,
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::UnaryOpNode>(
+  				compiler::frontend::UnaryOpNode::POINTER,
   				std::move(id_node), @LSBRKT
   			);
   		}
 | arr_param_decl[subdecl] LSBRKT expr RSBRKT
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::ACCESS,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::ACCESS,
 				std::move($subdecl), std::move($expr), @LSBRKT
 			);
 		}
@@ -240,9 +240,9 @@ arr_param_decl: // BinaryOpNode(ACCESS only)|UnaryOpNode(POINTER only)
 // e.g. "{ int a = 3; return a; }" or "{}"
 block: // BlockNode
   LCBRKT block_item_list RCBRKT
-  		{ $$ = std::make_unique<compiler::define::BlockNode>(std::move($block_item_list)); }
+  		{ $$ = std::make_unique<compiler::frontend::BlockNode>(std::move($block_item_list)); }
 | LCBRKT RCBRKT
-		{ $$ = std::make_unique<compiler::define::BlockNode>(); }
+		{ $$ = std::make_unique<compiler::frontend::BlockNode>(); }
 ;
 
 // e.g. "int a = 3; return a;"
@@ -254,7 +254,7 @@ block_item_list: // vector<VarDeclNode|IdNode|ConstIntNode|UnaryOpNode|BinaryOpN
   		}
 | block_item
 		{
-			$$ = compiler::define::AstPtrVec();
+			$$ = compiler::frontend::AstPtrVec();
 			$$.push_back(std::move($block_item));
 		}
 ;
@@ -289,16 +289,16 @@ statement: // IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode|IfNode|W
 assign_statement: // BinaryOpNode
   ID ASSIGN expr SEMI
   		{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-  				compiler::define::BinaryOpNode::ASSIGN,
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+  				compiler::frontend::BinaryOpNode::ASSIGN,
   				std::move(id_node), std::move($expr), @ASSIGN
   			);
   		}
 | array_access ASSIGN expr SEMI
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::ASSIGN,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::ASSIGN,
 				std::move($array_access), std::move($expr), @ASSIGN
 			);
 		}
@@ -311,13 +311,13 @@ if_statement: // IfNode
    */
   IF LBRKT expr RBRKT statement %prec IF
   		{
-  			$$ = std::make_unique<compiler::define::IfNode>(
+  			$$ = std::make_unique<compiler::frontend::IfNode>(
   				std::move($expr), std::move($statement)
   			);
   		}
 | IF LBRKT expr RBRKT statement[statement1] ELSE statement[statement2]
 		{
-			$$ = std::make_unique<compiler::define::IfNode>(
+			$$ = std::make_unique<compiler::frontend::IfNode>(
 				std::move($expr), std::move($statement1), std::move($statement2)
 			);
 		}
@@ -326,7 +326,7 @@ if_statement: // IfNode
 while_statement: // WhileNode
   WHILE LBRKT expr RBRKT statement
   		{
-  			$$ = std::make_unique<compiler::define::WhileNode>(
+  			$$ = std::make_unique<compiler::frontend::WhileNode>(
   				std::move($expr), std::move($statement)
   			);
   		}
@@ -334,119 +334,119 @@ while_statement: // WhileNode
 
 return_statement: // RetNode
   RET SEMI
-		{ $$ = std::make_unique<compiler::define::RetNode>(@RET); }
+		{ $$ = std::make_unique<compiler::frontend::RetNode>(@RET); }
 | RET expr SEMI
-  		{ $$ = std::make_unique<compiler::define::RetNode>(std::move($expr), @RET); }
+  		{ $$ = std::make_unique<compiler::frontend::RetNode>(std::move($expr), @RET); }
 ;
 
 break_statement: // BreakNode
   BREAK SEMI
-  		{ $$ = std::make_unique<compiler::define::BreakNode>(@BREAK); }
+  		{ $$ = std::make_unique<compiler::frontend::BreakNode>(@BREAK); }
 ;
 
 cont_statement: // ContNode
   CONT SEMI
-  		{ $$ = std::make_unique<compiler::define::ContNode>(@CONT); }
+  		{ $$ = std::make_unique<compiler::frontend::ContNode>(@CONT); }
 ;
 
 base_type: // TypePtr
   INT
-  		{ $$ = compiler::define::make_int(/* is_const */false); }
+  		{ $$ = compiler::frontend::make_int(/* is_const */false); }
 | CONST INT
-		{ $$ = compiler::define::make_int(/* is_const */true); }
+		{ $$ = compiler::frontend::make_int(/* is_const */true); }
 | VOID
-		{ $$ = compiler::define::make_void(); }
+		{ $$ = compiler::frontend::make_void(); }
 ;
 
 expr: // IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode
   expr[opr1] ADD expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::ADD,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::ADD,
 				std::move($opr1), std::move($opr2), @ADD
 			);
 		}
 | expr[opr1] SUB expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::SUB,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::SUB,
 				std::move($opr1), std::move($opr2), @SUB
 			);
 		}
 | expr[opr1] MUL expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::MUL,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::MUL,
 				std::move($opr1), std::move($opr2), @MUL
 			);
 		}
 | expr[opr1] DIV expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::DIV,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::DIV,
 				std::move($opr1), std::move($opr2), @DIV
 			);
 		}
 | expr[opr1] MOD expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::MOD,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::MOD,
 				std::move($opr1), std::move($opr2), @MOD
 			);
 		}
 | expr[opr1] OR expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::OR,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::OR,
 				std::move($opr1), std::move($opr2), @OR
 			);
 		}
 | expr[opr1] AND expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::AND,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::AND,
 				std::move($opr1), std::move($opr2), @AND
 			);
 		}
 | expr[opr1] GT expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::GT,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::GT,
 				std::move($opr1), std::move($opr2), @GT
 			);
 		}
 | expr[opr1] LT expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::LT,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::LT,
 				std::move($opr1), std::move($opr2), @LT
 			);
 		}
 | expr[opr1] GE expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::GE,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::GE,
 				std::move($opr1), std::move($opr2), @GE
 			);
 		}
 | expr[opr1] LE expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::LE,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::LE,
 				std::move($opr1), std::move($opr2), @LE
 			);
 		}
 | expr[opr1] EQ expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::EQ,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::EQ,
 				std::move($opr1), std::move($opr2), @EQ
 			);
 		}
 | expr[opr1] NE expr[opr2]
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::NE,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::NE,
 				std::move($opr1), std::move($opr2), @NE
 			);
 		}
@@ -454,26 +454,26 @@ expr: // IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode
 		{ $$ = std::move($opr); }
 | SUB expr[opr] %prec NEG
 		{
-			$$ = std::make_unique<compiler::define::UnaryOpNode>(
-				compiler::define::UnaryOpNode::NEG,
+			$$ = std::make_unique<compiler::frontend::UnaryOpNode>(
+				compiler::frontend::UnaryOpNode::NEG,
 				std::move($opr), @SUB
 			);
 		}
 | NOT expr[opr]
 		{
-			$$ = std::make_unique<compiler::define::UnaryOpNode>(
-				compiler::define::UnaryOpNode::NOT,
+			$$ = std::make_unique<compiler::frontend::UnaryOpNode>(
+				compiler::frontend::UnaryOpNode::NOT,
 				std::move($opr), @NOT
 			);
 		}
 | LBRKT expr[opr] RBRKT
 		{ $$ = std::move($opr); }
 | UINT
-		{ $$ = std::make_unique<compiler::define::ConstIntNode>($UINT); }
+		{ $$ = std::make_unique<compiler::frontend::ConstIntNode>($UINT); }
 | func_call
 		{ $$ = std::move($func_call); }
 | ID
-		{ $$ = std::make_unique<compiler::define::IdNode>($ID, @ID); }
+		{ $$ = std::make_unique<compiler::frontend::IdNode>($ID, @ID); }
 | array_access
 		{ $$ = std::move($array_access); }
 ;
@@ -482,16 +482,16 @@ expr: // IdNode|ConstIntNode|UnaryOpNode|BinaryOpNode|FuncCallNode
 array_access: // BinaryOpNode(ACCESS only)
   ID LSBRKT expr RSBRKT
 		{
-			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::ACCESS,
+			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::ACCESS,
 				std::move(id_node), std::move($expr), @LSBRKT
 			);
 		}
 | array_access[subarr] LSBRKT expr RSBRKT
 		{
-			$$ = std::make_unique<compiler::define::BinaryOpNode>(
-				compiler::define::BinaryOpNode::ACCESS,
+			$$ = std::make_unique<compiler::frontend::BinaryOpNode>(
+				compiler::frontend::BinaryOpNode::ACCESS,
 				std::move($subarr), std::move($expr), @LSBRKT
 			);
 		}
@@ -500,13 +500,13 @@ array_access: // BinaryOpNode(ACCESS only)
 func_call: // FuncCallNode
   ID LBRKT RBRKT
   		{
-  			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::define::FuncCallNode>(std::move(id_node));
+  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  			$$ = std::make_unique<compiler::frontend::FuncCallNode>(std::move(id_node));
   		}
 | ID LBRKT func_args RBRKT
 		{
-			auto id_node = std::make_unique<compiler::define::IdNode>($ID, @ID);
-			$$ = std::make_unique<compiler::define::FuncCallNode>(
+			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+			$$ = std::make_unique<compiler::frontend::FuncCallNode>(
 				std::move(id_node), std::move($func_args)
 			);
 		}
@@ -516,13 +516,13 @@ func_args: // FuncArgsNode
   func_args[sublist] COMMA expr
   		{
 			$$ = std::move($sublist);
-			std::get<compiler::define::FuncArgsNodePtr>($$)->push_back(
+			std::get<compiler::frontend::FuncArgsNodePtr>($$)->push_back(
 				std::move($expr));
 		}
 | expr
 		{
-			$$ = std::make_unique<compiler::define::FuncArgsNode>();
-			std::get<compiler::define::FuncArgsNodePtr>($$)->push_back(
+			$$ = std::make_unique<compiler::frontend::FuncArgsNode>();
+			std::get<compiler::frontend::FuncArgsNodePtr>($$)->push_back(
 				std::move($expr));
 		}
 ;

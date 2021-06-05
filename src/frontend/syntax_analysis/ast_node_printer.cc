@@ -2,7 +2,7 @@
 
 using std::endl;
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 void AstNodePrinter::operator() (const std::monostate &node)
@@ -198,11 +198,11 @@ void AstNodePrinter::operator() (const FuncArgsNodePtr &node)
 }
 
 
-}// namespace compiler::define
+}// namespace compiler::frontend
 
-std::ostream &operator << (std::ostream &out, const compiler::define::UnaryOpNode::OpType &op_type)
+std::ostream &operator << (std::ostream &out, const compiler::frontend::UnaryOpNode::OpType &op_type)
 {
-	using OpType = compiler::define::UnaryOpNode;
+	using OpType = compiler::frontend::UnaryOpNode;
 	switch(op_type)
 	{
 		case OpType::NEG: out << '-'; break;
@@ -213,9 +213,9 @@ std::ostream &operator << (std::ostream &out, const compiler::define::UnaryOpNod
 	return out;
 }
 
-std::ostream &operator << (std::ostream &out, const compiler::define::BinaryOpNode::OpType &op_type)
+std::ostream &operator << (std::ostream &out, const compiler::frontend::BinaryOpNode::OpType &op_type)
 {
-	using OpType = compiler::define::BinaryOpNode;
+	using OpType = compiler::frontend::BinaryOpNode;
 	switch(op_type)
 	{
 		case OpType::ADD: out << '+'; break;
@@ -238,14 +238,14 @@ std::ostream &operator << (std::ostream &out, const compiler::define::BinaryOpNo
 	return out;
 }
 
-std::ostream &operator << (std::ostream &out, const compiler::define::AstNodePrinter::Indent &indent)
+std::ostream &operator << (std::ostream &out, const compiler::frontend::AstNodePrinter::Indent &indent)
 {
 	return out << std::string(indent.cnt * 4, ' ');
 }
 
-std::ostream &operator << (std::ostream &out, const compiler::define::AstPtr &node)
+std::ostream &operator << (std::ostream &out, const compiler::frontend::AstPtr &node)
 {
-	compiler::define::AstNodePrinter printer(out);
+	compiler::frontend::AstNodePrinter printer(out);
 	std::visit(printer, node);
 	return out;
 }

@@ -8,7 +8,7 @@
 #include "type.h"
 #include "location.h"
 
-namespace compiler::define
+namespace compiler::frontend
 {
 
 // the abstract basic classes
@@ -478,6 +478,6 @@ class FuncArgsNode: public XaryAstNodeBase
 };
 
 
-} // namespace compiler::define
+} // namespace compiler::frontend
 
 #endif

@@ -28,14 +28,14 @@ class SemanticChecker
 		ConstExprReplacer(SemanticSymbolTable &_table)
 		  : table(_table) {}
 
-		define::AstPtr operator() (define::ConstIntNodePtr &node);
-		define::AstPtr operator() (define::IdNodePtr &node);
-		define::AstPtr operator() (define::InitializerNodePtr &node);
-		define::AstPtr operator() (define::UnaryOpNodePtr &node);
-		define::AstPtr operator() (define::BinaryOpNodePtr &node);
-		template<class ErrorType> define::AstPtr operator() (ErrorType &node);
+		AstPtr operator() (ConstIntNodePtr &node);
+		AstPtr operator() (IdNodePtr &node);
+		AstPtr operator() (InitializerNodePtr &node);
+		AstPtr operator() (UnaryOpNodePtr &node);
+		AstPtr operator() (BinaryOpNodePtr &node);
+		template<class ErrorType> AstPtr operator() (ErrorType &node);
 
-		void replace_expr(define::AstPtr &expr_node);
+		void replace_expr(AstPtr &expr_node);
 	};
 
 	// Deduce the type of the IdNode in the declaration part. Also simplifies the
@@ -46,7 +46,7 @@ class SemanticChecker
 		ConstExprReplacer &const_expr_replacer;
 	  protected:
 	  	std::vector<int> _dim_size;
-		define::IdNode *_id_node_ptr;
+		IdNode *_id_node_ptr;
 		bool _is_ptr;
 
 	  public:
@@ -55,19 +55,19 @@ class SemanticChecker
 			_id_node_ptr(nullptr), _is_ptr(false) {}
 
 		// Do deduce only during visiting.
-		void operator() (define::IdNodePtr &node);
-		void operator() (define::UnaryOpNodePtr &node);
-		void operator() (define::BinaryOpNodePtr &node);
+		void operator() (IdNodePtr &node);
+		void operator() (UnaryOpNodePtr &node);
+		void operator() (BinaryOpNodePtr &node);
 		template<class ErrorType> void operator() (ErrorType &node);
 		
 		// Do simplification if called from here.
-		define::TypePtr deduce_type(define::AstPtr &decl_expr,
-									const define::TypePtr &_base_type);
+		TypePtr deduce_type(AstPtr &decl_expr,
+									const TypePtr &_base_type);
 
 		// Sometimes this function is called through an actual ptr & instead of AstPtr &.
 		// template<class T>
-		// define::TypePtr deduce_type(const T &single_var_decl,
-		// 	const define::TypePtr &base_type);
+		// TypePtr deduce_type(const T &single_var_decl,
+		// 	const TypePtr &base_type);
 	};
 
 	// Check and set the type of the initializer list. Throw 
@@ -76,7 +76,7 @@ class SemanticChecker
 	{
 		ConstExprReplacer &const_expr_replacer;
 	  protected:
-		define::InitializerNode *_parent_ptr; // points to the parent initializer.
+		InitializerNode *_parent_ptr; // points to the parent initializer.
 		int _idx; // the index of the child node
 		bool _const_mode;
 
@@ -86,11 +86,11 @@ class SemanticChecker
 		  	_idx(0), _const_mode(false) {}
 
 		// Return whether the initializer list is exhausted.
-		bool operator() (const define::ArrayTypePtr &arr_type);
-		bool operator() (const define::IntTypePtr &ele_type);
+		bool operator() (const ArrayTypePtr &arr_type);
+		bool operator() (const IntTypePtr &ele_type);
 		template<class ErrorType> bool operator() (const ErrorType &err_type);
 
-		void check_type(define::AstPtr &initializer, const define::TypePtr &arr_type);
+		void check_type(AstPtr &initializer, const TypePtr &arr_type);
 	};
 
 	// Checks if there is a type mismatch in an expression. Returns the type of
@@ -104,17 +104,17 @@ class SemanticChecker
 		TypeChecker(SemanticSymbolTable &_table)
 		  : table(_table), optimize_constants(false) {}
 
-		define::TypePtr operator() (define::ConstIntNodePtr &node);
-		define::TypePtr operator() (define::IdNodePtr &node);
-		define::TypePtr operator() (define::UnaryOpNodePtr &node);
-		define::TypePtr operator() (define::BinaryOpNodePtr &node);
-		define::TypePtr operator() (define::FuncCallNodePtr &node);
+		TypePtr operator() (ConstIntNodePtr &node);
+		TypePtr operator() (IdNodePtr &node);
+		TypePtr operator() (UnaryOpNodePtr &node);
+		TypePtr operator() (BinaryOpNodePtr &node);
+		TypePtr operator() (FuncCallNodePtr &node);
 		// Missing "TypePtrVec operator() (FuncArgsNodePtr &node)", since
 		// we cannot return more than one type for a visitor class. Simply
 		// check this in FuncCallNode.
-		template<class ErrorType> define::TypePtr operator() (ErrorType &node);
+		template<class ErrorType> TypePtr operator() (ErrorType &node);
 
-		define::TypePtr check_type(define::AstPtr &expr_node, bool optimize_constants=false);
+		TypePtr check_type(AstPtr &expr_node, bool optimize_constants=false);
 	};
 
   public:
@@ -125,36 +125,36 @@ class SemanticChecker
 	InitializerTypeChecker initilaizer_type_checker;
 
 	// For declaration check.
-	define::TypePtr base_type = define::make_null();
+	TypePtr base_type = make_null();
 
 	// For break & continue binding. We use raw pointer here to work as a variable
 	// reference.
-	const define::WhileNode *inner_loop = nullptr;
+	const WhileNode *inner_loop = nullptr;
 
 	// For function return value check.
-	const define::FuncDefNode *curr_func = nullptr;
+	const FuncDefNode *curr_func = nullptr;
 	inline bool is_global() const { return curr_func == nullptr; }
 
 	// Does the semantic checking process.
 	SemanticChecker();
-	void operator() (define::ProgramNodePtr &node);
-	void operator() (define::VarDeclNodePtr &node);
-	void operator() (define::SingleVarDeclNodePtr &node);
-	void operator() (define::FuncDefNodePtr &node);
-	void operator() (define::FuncParamsNodePtr &node);
-	void operator() (define::SingleFuncParamNodePtr &node);
-	void operator() (define::BlockNodePtr &node);
-	void operator() (define::IfNodePtr &node);
-	void operator() (define::WhileNodePtr &node);
-	void operator() (define::BreakNodePtr &node);
-	void operator() (define::ContNodePtr &node);
-	void operator() (define::RetNodePtr &node);
+	void operator() (ProgramNodePtr &node);
+	void operator() (VarDeclNodePtr &node);
+	void operator() (SingleVarDeclNodePtr &node);
+	void operator() (FuncDefNodePtr &node);
+	void operator() (FuncParamsNodePtr &node);
+	void operator() (SingleFuncParamNodePtr &node);
+	void operator() (BlockNodePtr &node);
+	void operator() (IfNodePtr &node);
+	void operator() (WhileNodePtr &node);
+	void operator() (BreakNodePtr &node);
+	void operator() (ContNodePtr &node);
+	void operator() (RetNodePtr &node);
 
-	void operator() (define::ConstIntNodePtr &node);
-	void operator() (define::IdNodePtr &node);
-	void operator() (define::UnaryOpNodePtr &node);
-	void operator() (define::BinaryOpNodePtr &node);
-	void operator() (define::FuncCallNodePtr &node);
+	void operator() (ConstIntNodePtr &node);
+	void operator() (IdNodePtr &node);
+	void operator() (UnaryOpNodePtr &node);
+	void operator() (BinaryOpNodePtr &node);
+	void operator() (FuncCallNodePtr &node);
 	template<class ErrorNodePtr> void operator() (ErrorNodePtr &node);
 };
 

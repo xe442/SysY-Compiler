@@ -1,7 +1,7 @@
 #include "eeyore_symbol_table.h"
 
 using std::make_shared;
-using namespace compiler::define;
+using namespace compiler::frontend;
 
 namespace compiler::backend::eeyore
 {
