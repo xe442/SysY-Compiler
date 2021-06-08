@@ -222,15 +222,12 @@ optional<Operand> EeyoreGenerator::operator() (const IdNodePtr &node)
 
 	if(state.is_arr_access()) // calculate access offset.
 	{
-		TempVar offset_opr = resources.get_temp_var();
+		Operand offset_opr = resources.get_temp_var();
 		eeyore_code.emplace_back(DeclStmt(offset_opr));
-		if(state.in_loop())
-			// in case we use the same temp variable for several times in a loop
-			// set them to 0 before use them in a loop.
-			eeyore_code.emplace_back(MoveStmt(offset_opr, 0));
 
 		TypePtr type = find_res.value().type;
 		int const_offset = 0; // all the const offset are accumulated here.
+		bool idx_is_const = true;
 
 		const auto &access_idx = state.access_idx();
 		for(auto iter = access_idx.rbegin(); iter != access_idx.rend(); ++iter)
@@ -263,19 +260,35 @@ optional<Operand> EeyoreGenerator::operator() (const IdNodePtr &node)
 				const_offset += std::get<int>(idx) * element_size;
 			else
 			{
-				TempVar tmp = resources.get_temp_var();
-				eeyore_code.emplace_back(DeclStmt(tmp));
-				eeyore_code.emplace_back(BinaryOpStmt(
-					tmp, idx, BinaryOpNode::MUL, element_size
-				));
-				eeyore_code.emplace_back(BinaryOpStmt(
-					offset_opr, offset_opr, BinaryOpNode::ADD, tmp
-				));
+				if(idx_is_const) // Generate direct move stmt instead of add for the
+								 // first offset term.
+				{
+					eeyore_code.emplace_back(BinaryOpStmt(
+						offset_opr, idx, BinaryOpNode::MUL, element_size
+					));
+					idx_is_const = false;
+				}
+				else // accumulate the offset.
+				{
+					TempVar tmp = resources.get_temp_var();
+					eeyore_code.emplace_back(DeclStmt(tmp));
+					eeyore_code.emplace_back(BinaryOpStmt(
+						tmp, idx, BinaryOpNode::MUL, element_size
+					));
+					eeyore_code.emplace_back(BinaryOpStmt(
+						offset_opr, offset_opr, BinaryOpNode::ADD, tmp
+					));
+				}
 			}
 
 			type = element_type;
 		}
-		if(const_offset != 0)
+		if(idx_is_const)
+		{
+			offset_opr = const_offset; // the index is a constant, simply set
+									// offset_opr to the constant.
+		}
+		else if(const_offset != 0)
 		{
 			eeyore_code.emplace_back(BinaryOpStmt(
 				offset_opr, offset_opr, BinaryOpNode::ADD, const_offset
