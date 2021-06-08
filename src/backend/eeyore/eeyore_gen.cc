@@ -944,19 +944,19 @@ const std::list<EeyoreStatement> &EeyoreGenerator::generate_eeyore(const AstPtr 
 std::vector<Operand> EeyoreGenerator::all_defined_vars()
 {
 	std::vector<Operand> vars;
-	for(int i = 0; i < resources.orig_id; i++)
-		vars.emplace_back(OrigVar(i));
-	for(int i = 0; i < resources.temp_id; i++)
-		vars.emplace_back(TempVar(i));
-	
-	// Find the largest function argument to determine used parameter count.
-	int max_param_cnt = 0;
+
+	int max_param_cnt = 0; // Find the largest function argument to determine
+						   // used parameter count.
 	for(const auto &stmt : eeyore_code)
-		if(holds_alternative<FuncDefStmt>(stmt))
+	{
+		if(holds_alternative<DeclStmt>(stmt))
+			vars.emplace_back(std::get<DeclStmt>(stmt).var);
+		else if(holds_alternative<FuncDefStmt>(stmt))
 		{
-			const auto &func_def_stmt = std::get<FuncDefStmt>(stmt);
-			max_param_cnt = std::max(max_param_cnt, func_def_stmt.arg_cnt);
+			max_param_cnt = std::max(max_param_cnt,
+				std::get<FuncDefStmt>(stmt).arg_cnt);
 		}
+	}
 	for(int i = 0; i < max_param_cnt; i++)
 		vars.emplace_back(Param(i));
 	return vars;
