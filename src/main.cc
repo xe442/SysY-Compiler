@@ -6,42 +6,97 @@
 #include "ast_node_printer.h"
 #include "eeyore_gen.h"
 #include "eeyore_printer.h"
+#include "tigger_gen.h"
+#include "tigger_printer.h"
 
 using namespace compiler;
 using namespace std;
 
 // returns the input and output filename
-std::pair<char *, char *> parse_args(int argc, char *argv[])
+
+enum class GenType
 {
-	std::pair<char *, char *> ret = {nullptr, nullptr};
-	for(int i = 1; i < argc - 1; i++)
-		if(strcmp(argv[i], "-e") == 0) // input
+	EEYORE, TIGGER
+};
+struct MainArg
+{
+	GenType type;
+	char *input_filename;
+	char *output_filename;
+};
+
+MainArg parse_args(int argc, char *argv[])
+{
+	MainArg ret = {GenType::TIGGER, nullptr, nullptr};
+	for(int i = 1; i < argc; i++)
+	{
+		if(strcmp(argv[i], "-e") == 0) // eeyore mode
+			ret.type = GenType::EEYORE;
+		else if(strcmp(argv[i], "-t") == 0) // tigger mode
+			ret.type = GenType::TIGGER;
+		else if(strcmp(argv[i], "-o") == 0 && i < argc - 1) // set output file
 		{
-			ret.first = argv[i + 1];
+			ret.output_filename = argv[i + 1];
 			i++;
 		}
-		else if(strcmp(argv[i], "-o") == 0) // output
-		{
-			ret.second = argv[i + 1];
-			i++;
-		}
+		else // set input file
+			ret.input_filename = argv[i];
+	}
 	return ret;
 }
 
 int main(int argc, char *argv[])
 {
-	pair<char *, char *> io_filename = parse_args(argc, argv);
-	if(io_filename.first != nullptr)
-		set_input_file(io_filename.first);
+	MainArg args = parse_args(argc, argv);
+	if(args.input_filename != nullptr)
+		set_input_file(args.input_filename);
 
-	define::AstPtr prog_node;
-	auto parser = yy::parser(prog_node);
-	parser.parse();
-
-	frontend::SemanticChecker checker;
 	try
 	{
+		// Syntax analysis.
+		frontend::AstPtr prog_node;
+		auto parser = yy::parser(prog_node);
+		parser.parse();
+
+		// Semantic analysis.
+		frontend::SemanticChecker checker;
 		visit(checker, prog_node);
+		// cout << "after semantic analysis: " << endl;
+		// cout << prog_node << endl << endl;
+
+		// Eeyore generation.
+		backend::eeyore::EeyoreGenerator eeyore_gen;
+		const auto &eeyore_code = eeyore_gen.generate_eeyore(prog_node);
+
+		if(args.type == GenType::EEYORE)
+		{
+			if(args.output_filename == nullptr)
+			{
+				for(const auto &stmt : eeyore_code)
+					cout << stmt;
+			}
+			else
+			{
+				fstream outf(args.output_filename, fstream::out);
+				for(const auto &stmt : eeyore_code)
+					outf << stmt;
+			}
+			return 0;
+		}
+
+		backend::tigger::TiggerGenerator tigger_gen(eeyore_code, std::move(eeyore_gen.all_defined_vars()));
+		const auto &tigger_code = tigger_gen.generate_tigger();
+		if(args.output_filename == nullptr)
+		{
+			for(const auto &stmt : tigger_code)
+				cout << stmt;
+		}
+		else
+		{
+			fstream outf(args.output_filename, fstream::out);
+			for(const auto &stmt : tigger_code)
+				outf << stmt;
+		}
 	}
 	catch(utils::InternalError &e)
 	{
@@ -55,36 +110,10 @@ int main(int argc, char *argv[])
 		cerr << e.what() << endl;
 		return 1;
 	}
-	
-	// cout << "after semantic analysis: " << endl;
-	// cout << prog_node << endl << endl;
-
-	backend::eeyore::EeyoreGenerator eeyore_gen;
-	try
-	{
-		const list<backend::eeyore::EeyoreStatement> &
-		code = eeyore_gen.generate_eeyore(prog_node);
-		
-		if(io_filename.second == nullptr)
-		{
-			for(const auto &stmt : code)
-				cout << stmt;
-		}
-		else
-		{
-			fstream outf(io_filename.second, fstream::out);
-			for(const auto &stmt : code)
-				outf << stmt;
-		}
-	}
-	catch(utils::InternalError &e)
-	{
-		cerr << e.what() << endl;
-	}
 	catch(std::bad_optional_access &e)
 	{
 		cerr << e.what() << endl;
+		return 1;
 	}
-
 	return 0;
 }
