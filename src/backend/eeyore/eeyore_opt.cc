@@ -18,20 +18,20 @@ void EeyoreGenerator::EeyoreOptimizer::_remove_useless_labels_and_jumps(
 {
 	// 1. Find all the labels defined and all the jump statements.
 	// 2. Remove all the double jumps.
-	// 3. Mark a jump statement as useless if it jumps to the next statement,
-	//    or it directly follows another jump statement.
-	// 4. Remove all the useless jump statements.
-	// 5. Mark a label as useless if it directly follows another label,
-	//    or it is not used by any valid jump statements.
-	// 6. Remove all the useless labels and re-assign the ids of the
-	//    labels so that they are consequtive.
+	// loop until the code is not changed:
+	//   3. Mark a jump statement as useless if it jumps to the next statement,
+	//      or it directly follows another jump statement.
+	//   4. Remove all the useless jump statements.
+	//   5. Mark a label as useless if it directly follows another label,
+	//      or it is not used by any valid jump statements.
+	//   6. Remove all the useless labels and re-assign the ids of the
+	//      labels so that they are consequtive.
 
 	using StmtPtr = std::list<EeyoreStatement>::iterator;
 
 	DBG(
 		std::cout << "initial code: " << std::endl;
-		for(const auto &stmt : eeyore_code)
-			std::cout << stmt;
+		std::cout << eeyore_code;
 		std::cout << "end initial code"  << std::endl << std::endl;
 	);
 
@@ -107,99 +107,124 @@ void EeyoreGenerator::EeyoreOptimizer::_remove_useless_labels_and_jumps(
 	}
 	DBG(std::cout << "step 2 completed" << std::endl);
 
-	// step 3 & 4.
-	for(auto iter = jump_stmts.crbegin(); iter != jump_stmts.crend(); ++iter)
-		// Here we remove the goto statements from back to front, because there
-		// may be cases like:
-		//  " goto l1
-		//    goto l2
-		//   l1:      "
-		// In this case, removing staements from back to front first removes
-		// "goto l2", and then "goto l1". But if removing statements from the
-		// front, only "goto l2" is removed.
+	bool changed = true;
+	while(changed)
 	{
-		StmtPtr jump_stmt_ptr = *iter;
-		int label_id = std::visit(label_id_getter, *jump_stmt_ptr);
-		bool useless = false;
+		changed = false;
+		valid_jump_stmts.clear();
+		valid_label_ids.clear();
+		label_id_map.clear();
 
-		// Check whether it directly follows a GotoStmt.
-		StmtPtr prev_stmt_ptr = jump_stmt_ptr;
-		for(--prev_stmt_ptr; prev_stmt_ptr != eeyore_code.begin(); --prev_stmt_ptr)
-			// The first eeyore statement could not be a GotoStmt, so just
-			// check until the second statement.
+		// step 3 & 4.
+		for(auto iter = jump_stmts.cbegin(); iter != jump_stmts.cend(); ++iter)
 		{
-			if(holds_alternative<GotoStmt>(*prev_stmt_ptr))
+			StmtPtr jump_stmt_ptr = *iter;
+			int label_id = std::visit(label_id_getter, *jump_stmt_ptr);
+			bool useless = false;
+
+			// Check whether it directly follows a GotoStmt.
+			StmtPtr prev_stmt_ptr = jump_stmt_ptr;
+			for(--prev_stmt_ptr; prev_stmt_ptr != eeyore_code.begin(); --prev_stmt_ptr)
+				// The first eeyore statement could not be a GotoStmt, so just
+				// check until the second statement.
 			{
-				useless = true;
-				break;
+				if(holds_alternative<GotoStmt>(*prev_stmt_ptr))
+				{
+					useless = true;
+					break;
+				}
+				else if(!holds_alternative<LabelStmt>(*prev_stmt_ptr))
+					break;
 			}
-			else if(!holds_alternative<LabelStmt>(*prev_stmt_ptr))
-				break;
-		}
-		if(useless)
-		{
-			eeyore_code.erase(jump_stmt_ptr);
-			continue;
-		}
-
-		// Check if it jumps to the next statement.
-		StmtPtr next_stmt_ptr = jump_stmt_ptr;
-		for(++next_stmt_ptr; next_stmt_ptr != eeyore_code.end(); ++next_stmt_ptr)
-		{
-			if(holds_alternative<LabelStmt>(*next_stmt_ptr)
-				&& std::get<LabelStmt>(*next_stmt_ptr).label.id == label_id)
+			if(useless)
 			{
-				useless = true;
-				break;
+				eeyore_code.erase(jump_stmt_ptr);
+				changed = true;
+				continue;
 			}
-			else break;
-		}
 
-		if(useless)
-			eeyore_code.erase(jump_stmt_ptr);
-		else
-		{
-			valid_jump_stmts.push_back(jump_stmt_ptr);
-			valid_label_ids.insert(label_id);
-		}
-	}
-	DBG(std::cout << "step 3 and 4 completed" << std::endl);
-
-	// Step 5 & 6.
-	int new_label_id = 0;
-	for(StmtPtr label_stmt_ptr : label_stmts)
-	{
-		int label_id = std::get<LabelStmt>(*label_stmt_ptr).label.id;
-		if(valid_label_ids.find(label_id) != valid_label_ids.end())
-		{
-			StmtPtr prev_stmt_ptr = label_stmt_ptr;
-			--prev_stmt_ptr;
-			if(!holds_alternative<LabelStmt>(*prev_stmt_ptr))
+			// Check if it jumps to the next statement.
+			StmtPtr next_stmt_ptr = jump_stmt_ptr;
+			for(++next_stmt_ptr; next_stmt_ptr != eeyore_code.end(); ++next_stmt_ptr)
 			{
-				valid_label_stmts.push_back(label_stmt_ptr);
-				label_id_map[label_id] = new_label_id++;
+				if(holds_alternative<LabelStmt>(*next_stmt_ptr)
+					&& std::get<LabelStmt>(*next_stmt_ptr).label.id == label_id)
+				{
+					useless = true;
+					break;
+				}
+				else break;
+			}
+
+			if(useless)
+			{
+				changed = true;
+				eeyore_code.erase(jump_stmt_ptr);
 			}
 			else
 			{
-				int prev_label_id = std::get<LabelStmt>(*prev_stmt_ptr).label.id;
-				label_id_map[label_id] = label_id_map[prev_label_id];
+				valid_jump_stmts.push_back(jump_stmt_ptr);
+				valid_label_ids.insert(label_id);
+			}
+		}
+		DBG(std::cout << "step 3 and 4 completed" << std::endl);
+
+		// Step 5 & 6.
+		int new_label_id = 0;
+		for(StmtPtr label_stmt_ptr : label_stmts)
+		{
+			int label_id = std::get<LabelStmt>(*label_stmt_ptr).label.id;
+			if(valid_label_ids.find(label_id) != valid_label_ids.end())
+			{
+				StmtPtr prev_stmt_ptr = label_stmt_ptr;
+				--prev_stmt_ptr;
+				if(!holds_alternative<LabelStmt>(*prev_stmt_ptr))
+				{
+					valid_label_stmts.push_back(label_stmt_ptr);
+					if(label_id_map.find(label_id) == label_id_map.end())
+						label_id_map[label_id] = new_label_id++;
+				}
+				else
+				{
+					int prev_label_id = std::get<LabelStmt>(*prev_stmt_ptr).label.id;
+					if(label_id_map.find(label_id) == label_id_map.end())
+						label_id_map[label_id] = label_id_map[prev_label_id];
+					changed = true;
+					eeyore_code.erase(label_stmt_ptr);
+				}
+			}
+			else
+			{
+				changed = true;
 				eeyore_code.erase(label_stmt_ptr);
 			}
 		}
-		else
-			eeyore_code.erase(label_stmt_ptr);
-	}
-	for(StmtPtr jump_stmt_ptr : valid_jump_stmts)
-	{
-		Label &label = std::visit(label_getter, *jump_stmt_ptr);
-		label = Label(label_id_map[label.id]);
-	}
-	for(StmtPtr label_stmt_ptr : valid_label_stmts)
-	{
-		LabelStmt &label_stmt = std::get<LabelStmt>(*label_stmt_ptr);
-		label_stmt.label = Label(label_id_map[label_stmt.label.id]);
-	}
-	DBG(std::cout << "step 5 and 6 completed" << std::endl);
+
+		DBG(
+			for(const auto &p :label_id_map)
+				std::cout << p.first << "->" << p.second << std::endl;
+		)
+
+		for(StmtPtr jump_stmt_ptr : valid_jump_stmts)
+		{
+			Label &label = std::visit(label_getter, *jump_stmt_ptr);
+			label = Label(label_id_map[label.id]);
+		}
+		for(StmtPtr label_stmt_ptr : valid_label_stmts)
+		{
+			LabelStmt &label_stmt = std::get<LabelStmt>(*label_stmt_ptr);
+			label_stmt.label = Label(label_id_map[label_stmt.label.id]);
+		}
+
+		jump_stmts = valid_jump_stmts;
+		label_stmts = valid_label_stmts;
+		DBG(std::cout << "step 5 and 6 completed" << std::endl);
+		DBG(
+			std::cout << "initial code: " << std::endl;
+			std::cout << eeyore_code;
+			std::cout << "end initial code"  << std::endl << std::endl;
+		);
+	}while(changed);
 }
 
 } // namespace compiler::backend::eeyore

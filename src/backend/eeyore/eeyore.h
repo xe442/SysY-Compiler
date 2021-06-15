@@ -1,5 +1,5 @@
-#ifndef EEYORE
-#define EEYORE
+#ifndef EEYORE_H
+#define EEYORE_H
 
 #include <string>
 #include <variant>
