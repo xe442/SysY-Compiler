@@ -14,8 +14,8 @@ namespace compiler::backend::eeyore
  * void putint(int a)
  * void putch(int a)
  * void putarray(int n, int a[])
- * void starttime()
- * void stoptime()
+ * void _sysy_starttime(int lineno)
+ * void _sysy_stoptime(int lineno)
  */
 const std::vector<std::pair<std::string, EeyoreSymbolTableEntry>> EeyoreSymbolTable::INTERNAL_FUNCTIONS = {
 	{ "getint", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()), std::monostate())													},
@@ -24,8 +24,8 @@ const std::vector<std::pair<std::string, EeyoreSymbolTableEntry>> EeyoreSymbolTa
 	{ "putint", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}), std::monostate())										},
 	{ "putch", 		EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}), std::monostate())										},
 	{ "putarray",	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int(), make_shared<PointerType>(make_int())}), std::monostate())	},
-	{ "starttime", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()), std::monostate())													},
-	{ "stoptime", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()), std::monostate())													}
+	{ "_sysy_starttime", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}), std::monostate())								},
+	{ "_sysy_stoptime", 	EeyoreSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}), std::monostate())								}
 };
 
 EeyoreSymbolTable::EeyoreSymbolTable(): utils::ChainedMap<std::string, EeyoreSymbolTableEntry>()

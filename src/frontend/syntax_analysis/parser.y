@@ -500,8 +500,32 @@ array_access: // BinaryOpNode(ACCESS only)
 func_call: // FuncCallNode
   ID LBRKT RBRKT
   		{
-  			auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
-  			$$ = std::make_unique<compiler::frontend::FuncCallNode>(std::move(id_node));
+			// The only two macros are processed here. (Why they are macros?)
+			// #define starttime() _sysy_starttime(__LINE__)
+			// #define stoptime()  _sysy_stoptime(__LINE__)
+			
+			if($ID == "starttime" || $ID == "stoptime")
+			{
+				// First make an argument node, with lineno as its only argument.
+				auto arg_node = std::make_unique<compiler::frontend::FuncArgsNode>();
+				int lineno = @ID.begin.line;
+				arg_node->push_back(std::make_unique<compiler::frontend::ConstIntNode>(lineno));
+
+				// Then make the corresponding function call.
+				compiler::frontend::IdNodePtr id_node;
+				if($ID == "starttime")
+					id_node = std::make_unique<compiler::frontend::IdNode>("_sysy_starttime", @ID);
+				else // "stoptime"
+					id_node = std::make_unique<compiler::frontend::IdNode>("_sysy_stoptime", @ID);
+				$$ = std::make_unique<compiler::frontend::FuncCallNode>(
+					std::move(id_node), std::move(arg_node)
+				);
+			}
+			else
+			{
+				auto id_node = std::make_unique<compiler::frontend::IdNode>($ID, @ID);
+  				$$ = std::make_unique<compiler::frontend::FuncCallNode>(std::move(id_node));
+			}
   		}
 | ID LBRKT func_args RBRKT
 		{

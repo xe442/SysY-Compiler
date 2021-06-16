@@ -14,8 +14,8 @@ namespace compiler::frontend
  * void putint(int a)
  * void putch(int a)
  * void putarray(int n, int a[])
- * void starttime()
- * void stoptime()
+ * void _sysy_starttime(int lineno)
+ * void _sysy_stoptime(int lineno)
  */
 const std::vector<std::pair<std::string, SemanticSymbolTableEntry>> SemanticSymbolTable::INTERNAL_FUNCTIONS = {
 	{ "getint", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_int(), TypePtrVec()))													},
@@ -24,8 +24,8 @@ const std::vector<std::pair<std::string, SemanticSymbolTableEntry>> SemanticSymb
 	{ "putint", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
 	{ "putch", 		SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))										},
 	{ "putarray",	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int(), make_shared<PointerType>(make_int())}))	},
-	{ "starttime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													},
-	{ "stoptime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec()))													}
+	{ "_sysy_starttime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))								},
+	{ "_sysy_stoptime", 	SemanticSymbolTableEntry(make_shared<FuncType>(make_void(), TypePtrVec{make_int()}))								}
 };
 
 SemanticSymbolTable::SemanticSymbolTable(): ChainedMap<std::string, SemanticSymbolTableEntry>()
