@@ -35,7 +35,7 @@ std::vector<Operand> used_vars(const EeyoreStatement &stmt)
 		[](const BinaryOpStmt &stmt) { return Operands{stmt.opr1, stmt.opr2}; },
 		[](const MoveStmt &stmt) { return Operands{stmt.opr1}; },
 		[](const ReadArrStmt &stmt) { return Operands{stmt.arr_opr, stmt.idx_opr}; },
-		[](const WriteArrStmt &stmt) { return Operands{stmt.opr, stmt.idx_opr}; },
+		[](const WriteArrStmt &stmt) { return Operands{stmt.opr, stmt.arr_opr, stmt.idx_opr}; },
 		[](const auto &stmt) { return Operands{}; }
 	};
 
