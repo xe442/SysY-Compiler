@@ -154,10 +154,3 @@ std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::G
 	std::visit(printer, global_var_or_num);
 	return out;
 }
-
-std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::TiggerStatement &stmt)
-{
-	compiler::backend::tigger::TiggerPrinter printer{out};
-	std::visit(printer, stmt);
-	return out;
-}

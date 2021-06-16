@@ -43,4 +43,14 @@ struct EeyorePrinter
 std::ostream &operator << (std::ostream &out, const compiler::backend::eeyore::Operand opr);
 std::ostream &operator << (std::ostream &out, const compiler::backend::eeyore::EeyoreStatement &stmt);
 
+// Printer of container of EeyoreStatements.
+template<template<class...> class Container>
+std::ostream &operator << (std::ostream &out, const Container<compiler::backend::eeyore::EeyoreStatement> &stmts)
+{
+	compiler::backend::eeyore::EeyorePrinter printer{out};
+	for(auto iter = stmts.begin(); iter != stmts.end(); ++iter)
+		std::visit(printer, *iter);
+	return out;
+}
+
 #endif

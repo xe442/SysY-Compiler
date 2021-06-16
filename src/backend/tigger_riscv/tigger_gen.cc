@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include "fstring.h"
 #include "visitor_helper.h"
@@ -92,7 +91,7 @@ TiggerGenerator::TiggerGenerator(
 
 const std::list<TiggerStatement> &TiggerGenerator::generate_tigger()
 {
-	DBG(std::cout << "start allocating" << std::endl);
+	DBG(std::cout << std::endl << "start generatning tigger" << std::endl);
 	_is_global = true;
 	_func_id = 0;
 	_param_id = 0;
@@ -113,7 +112,7 @@ const std::list<TiggerStatement> &TiggerGenerator::generate_tigger()
 		_temp_regs.reset();
 		_eeyore_stmt_id++;
 	}
-	DBG(std::cout << "end allocating" << std::endl);
+	DBG(std::cout << "end generating tigger" << std::endl);
 	return _tigger_code;
 }
 
@@ -122,6 +121,7 @@ const std::list<TiggerStatement> &TiggerGenerator::generate_tigger()
 // var 40 T0   -->   v1 = malloc 40
 void TiggerGenerator::operator() (const eeyore::DeclStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	if(_is_global)
 	{
 		INTERNAL_ASSERT(holds_alternative<eeyore::OrigVar>(stmt.var),
@@ -138,6 +138,7 @@ void TiggerGenerator::operator() (const eeyore::DeclStmt &stmt)
 // f_func [2]   -->   f_func [2] [stack_size]
 void TiggerGenerator::operator() (const eeyore::FuncDefStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	_is_global = false;
 	_tigger_code.emplace_back(FuncHeaderStmt(stmt.func_name, stmt.arg_cnt));
 	_func_start = std::prev(_tigger_code.end());
@@ -156,6 +157,7 @@ void TiggerGenerator::operator() (const eeyore::FuncDefStmt &stmt)
 // Same as eeyore.
 void TiggerGenerator::operator() (const eeyore::EndFuncDefStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	int stack_size = _allocator.func_stack_size();
 	std::get<FuncHeaderStmt>(*_func_start).stack_size = stack_size;
 
@@ -187,6 +189,7 @@ void TiggerGenerator::operator() (const eeyore::EndFuncDefStmt &stmt)
 //            -->   loadaddr loc(t0) aX
 void TiggerGenerator::operator() (const eeyore::ParamStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	if(holds_alternative<int>(stmt.param))
 	{
 		int param_val = std::get<int>(stmt.param);
@@ -238,6 +241,7 @@ void TiggerGenerator::operator() (const eeyore::ParamStmt &stmt)
 //                          store a0 loc(T0)
 void TiggerGenerator::operator() (const eeyore::FuncCallStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	_param_id = 0;
 	_tigger_code.emplace_back(FuncCallStmt(stmt.func_name));
 	if(stmt.retval_receiver.has_value())
@@ -285,6 +289,7 @@ void TiggerGenerator::operator() (const eeyore::FuncCallStmt &stmt)
 //                   return
 void TiggerGenerator::operator() (const eeyore::RetStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	if(stmt.retval.has_value())
 	{
 		if(holds_alternative<int>(stmt.retval.value()))
@@ -321,6 +326,7 @@ void TiggerGenerator::operator() (const eeyore::RetStmt &stmt)
 // Same as eeyore.
 void TiggerGenerator::operator() (const eeyore::GotoStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	_tigger_code.emplace_back(GotoStmt(stmt.goto_label));
 }
 
@@ -329,6 +335,7 @@ void TiggerGenerator::operator() (const eeyore::GotoStmt &stmt)
 //                                if reg(T1) BinOp reg(T2) goto l1
 void TiggerGenerator::operator() (const eeyore::CondGotoStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	Reg reg1 = _read_opr(stmt.opr1);
 	Reg reg2 = _read_opr(stmt.opr2);
 	_tigger_code.emplace_back(CondGotoStmt(reg1, stmt.op, reg2, stmt.goto_label));
@@ -349,13 +356,16 @@ void TiggerGenerator::operator() (const eeyore::CondGotoStmt &stmt)
 // Maximum temporary register used: 2.
 void TiggerGenerator::operator() (const eeyore::UnaryOpStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	Reg reg1 = _read_opr(stmt.opr1);
 	if(_is_global_var(stmt.opr))
 	{
 		auto var = std::get<eeyore::OrigVar>(stmt.opr);
 		auto tmp_reg = _temp_regs.get_temp();
-		auto tmp_reg2 = _temp_regs.get_temp();
 		_tigger_code.emplace_back(UnaryOpStmt(tmp_reg, stmt.op_type, reg1));
+		_temp_regs.try_return_temp(reg1);
+
+		auto tmp_reg2 = _temp_regs.get_temp();
 		_tigger_code.emplace_back(LoadAddrStmt(tmp_reg2, GlobalVar(var.id)));
 		_tigger_code.emplace_back(WriteArrStmt(tmp_reg2, 0, tmp_reg));
 	}
@@ -403,6 +413,7 @@ void TiggerGenerator::operator() (const eeyore::UnaryOpStmt &stmt)
 // Maximum temporary register used: 2
 void TiggerGenerator::operator() (const eeyore::BinaryOpStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	Reg reg1 = _read_opr(stmt.opr1);
 	
 	if(_is_global_var(stmt.opr))
@@ -513,6 +524,7 @@ void TiggerGenerator::operator() (const eeyore::BinaryOpStmt &stmt)
 // or T1 allocation can be optimized if T1 is an immediate number.
 void TiggerGenerator::operator() (const eeyore::MoveStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	if(_is_global_var(stmt.opr))
 	{
 		auto var = std::get<eeyore::OrigVar>(stmt.opr);
@@ -602,6 +614,7 @@ void TiggerGenerator::operator() (const eeyore::MoveStmt &stmt)
  */
 void TiggerGenerator::operator() (const eeyore::ReadArrStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	// value read but never used.
 	if(!_is_global_var(stmt.opr) && !_allocator.actual_pos_of(stmt.opr).has_value())
 		return;
@@ -807,6 +820,7 @@ void TiggerGenerator::operator() (const eeyore::ReadArrStmt &stmt)
 */
 void TiggerGenerator::operator() (const eeyore::WriteArrStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	auto arr_pos = _allocator.actual_pos_of(stmt.arr_opr);
 	if(!arr_pos.has_value()) // global array
 	{
@@ -885,6 +899,7 @@ void TiggerGenerator::operator() (const eeyore::WriteArrStmt &stmt)
 // Same as eeyore.
 void TiggerGenerator::operator() (const eeyore::LabelStmt &stmt)
 {
+	DBG(std::cout << stmt);
 	_tigger_code.emplace_back(LabelStmt(stmt.label));
 }
 

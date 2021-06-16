@@ -138,6 +138,13 @@ class EeyoreGenerator
 		inline void reset_initializer_write()
 			{ reset_arr_offset(); curr_type.reset(); }
 		
+	  protected:
+	  	bool _is_global;
+	  public:
+	  	inline void set_local() { _is_global = false; }
+		inline void set_global() { _is_global = true; } 
+	  	inline bool is_global() const { return _is_global; }
+		
 		void reset_all();
 	};
 	GeneratorState state;

@@ -48,42 +48,52 @@ void EeyoreGenerator::EeyoreRearranger::rearrange(std::list<EeyoreStatement> &ee
 			if(std::get<FuncDefStmt>(stmt).func_name == "f_main") // main function
 				main_begin = iter;
 			func_begin = iter;
+			++iter;
 		}
 		else if(holds_alternative<EndFuncDefStmt>(stmt))
 		{
 			DBG(std::cout << "a end func def statement" << std::endl);
 			func_begin = eeyore_code.end(); // reset func_begin
+			++iter;
 		}
 		else if(holds_alternative<DeclStmt>(stmt))
 		{
-			DBG(std::cout << "a decl statement" << std::endl);
 			if(func_begin != eeyore_code.end())
 			{
+				DBG(std::cout << "a local decl statement" << std::endl);
 				func_begin = eeyore_code.insert(++func_begin, stmt);
 					// We would insert DeclStmts after func_begin, but list::insert
 					// inserts an element `before` a certain position, so increase
 					// the position by 1, then insert it, and finally reset func_begin
 					// to be the statement inserted.
-				iter = eeyore_code.erase(iter); // erase the stmt and forward iter
 			}
 			else // A global DeclStmt, move it before global_def_end. 
 			{
-				if(global_def_end == eeyore_code.end()) // No global declaration at the beginning.
-					global_def_end = eeyore_code.insert(eeyore_code.begin(), stmt);
+				auto var = std::get<DeclStmt>(stmt).var;
+				if(holds_alternative<OrigVar>(var))
+				{
+					DBG(std::cout << "a global T var decl statement" << std::endl);
+					if(global_def_end == eeyore_code.end()) // No global declaration at the beginning.
+						global_def_end = eeyore_code.insert(eeyore_code.begin(), stmt);
+					else
+						global_def_end = eeyore_code.insert(++global_def_end, stmt);
+				}
 				else
-					global_def_end = eeyore_code.insert(++global_def_end, stmt);
-				iter = eeyore_code.erase(iter);
+				{
+					DBG(std::cout << "a global t var decl statement" << std::endl);
+					global_assignments.push_back(stmt);
+				}
 			}
-			continue;
+			iter = eeyore_code.erase(iter);
 		}
 		else if(func_begin == eeyore_code.end()) // non-decl statement in global, it must be a global assignment statement.
 		{
 			DBG(std::cout << "a global assignment" << std::endl);
 			global_assignments.push_back(stmt);
 			iter = eeyore_code.erase(iter);
-			continue;
 		}
-		++iter;
+		else
+			++iter;
 	}
 	INTERNAL_ASSERT(main_begin != eeyore_code.end(), "no main function");
 	
@@ -104,6 +114,7 @@ void EeyoreGenerator::GeneratorState::reset_all()
 	array_offset.reset();
 	access_index.clear();
 	curr_type.reset();
+	_is_global = true;
 }
 
 optional<Operand> EeyoreGenerator::operator() (const ProgramNodePtr &node)
@@ -130,9 +141,35 @@ optional<Operand> EeyoreGenerator::operator() (const SingleVarDeclNodePtr &node)
 	const TypePtr &id_type = node->type();
 
 	// Generate decl code.
-	auto orig_var = resources.get_original_var(get_size(id_type));
+	int var_size = get_size(id_type);
+	auto orig_var = resources.get_original_var(var_size);
 	eeyore_code.emplace_back(DeclStmt(orig_var));
 	table.insert(id_name, id_type, orig_var);
+
+	// Zero the local array using a loop before initializing it with initializer list.
+	// Global variables are initialized during semantic analysis.
+	// The example code to zero T0:
+	//   var t0
+	//   t0 = 0
+	// l0:
+	//   if t0 == var_size goto l1
+	//   T0[t0] = 0
+	//   t0 = t0 + 4
+	//   goto l0
+	// l1:
+	if(!state.is_global() && !is_basic(id_type))
+	{
+		auto l0 = resources.get_label(), l1 = resources.get_label();
+		auto t0 = resources.get_temp_var();
+		eeyore_code.emplace_back(DeclStmt(t0));
+		eeyore_code.emplace_back(MoveStmt(t0, 0));
+		eeyore_code.emplace_back(LabelStmt(l0));
+		eeyore_code.emplace_back(CondGotoStmt(t0, BinaryOpNode::EQ, var_size, l1));
+		eeyore_code.emplace_back(WriteArrStmt(orig_var, t0, 0));
+		eeyore_code.emplace_back(BinaryOpStmt(t0, t0, BinaryOpNode::ADD, 4));
+		eeyore_code.emplace_back(GotoStmt(l0));
+		eeyore_code.emplace_back(LabelStmt(l1));
+	}
 
 	// Generate initial value assignment code.
 	if(!is_null_ast(node->init_val()))
@@ -425,6 +462,7 @@ optional<Operand> EeyoreGenerator::operator() (const FuncDefNodePtr &node)
 	const TypePtr &id_type = node->type();
 	table.insert(id->name(), node->type());
 	eeyore_code.emplace_back(FuncDefStmt(id->name(), arg_cnt));
+	state.set_local();
 
 	// create a new block for parameters.
 	table.new_block();
@@ -459,6 +497,7 @@ optional<Operand> EeyoreGenerator::operator() (const FuncDefNodePtr &node)
 	// end function
 	table.end_block(); // clear parameters.
 	eeyore_code.emplace_back(EndFuncDefStmt(id->name()));
+	state.set_global();
 	return std::nullopt;
 }
 

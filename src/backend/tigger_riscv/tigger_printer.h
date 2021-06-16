@@ -17,13 +17,12 @@ struct RegPrinter
 	void operator() (const ArgReg &reg);
 };
 
-struct TiggerPrinter
+class TiggerPrinter
 {
-  protected:
-	static int _riscv_xalloc;
-
   public:
 	std::ostream &out;
+
+	TiggerPrinter(std::ostream &_out): out(_out) {}
 
 	void operator() (const GlobalVarDeclStmt &stmt);
 	void operator() (const GlobalArrDeclStmt &stmt);
@@ -51,10 +50,8 @@ std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::R
 std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::RegOrNum &reg_or_num);
 std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::GlobalVar &global_var);
 std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::GlobalVarOrNum &global_var_or_num);
-std::ostream &operator << (std::ostream &out, const compiler::backend::tigger::TiggerStatement &stmt);
 
-// Switch output mode between tigger and riscv.
-std::ostream &riscv(std::ostream &out);
-std::ostream &tigger(std::ostream &out);
+// The printer methods are implemented in riscv_printer.cc, since a tigger
+// statement can be printed either in tigger style or risc-v style.
 
 #endif
