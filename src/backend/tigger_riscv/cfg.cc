@@ -1,4 +1,3 @@
-#define DEBUG
 #include "dbg.h"
 #include "visitor_helper.h"
 #include "tigger_gen.h"

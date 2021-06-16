@@ -1,4 +1,3 @@
-#define DEBUG
 #include <algorithm>
 #include "dbg.h"
 #include "insertion_sort.h"
