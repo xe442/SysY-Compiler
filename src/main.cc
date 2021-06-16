@@ -8,6 +8,7 @@
 #include "eeyore_printer.h"
 #include "tigger_gen.h"
 #include "tigger_printer.h"
+#include "riscv_printer.h"
 
 using namespace compiler;
 using namespace std;
@@ -16,7 +17,7 @@ using namespace std;
 
 enum class GenType
 {
-	EEYORE, TIGGER
+	EEYORE, TIGGER, RISCV
 };
 struct MainArg
 {
@@ -27,7 +28,7 @@ struct MainArg
 
 MainArg parse_args(int argc, char *argv[])
 {
-	MainArg ret = {GenType::TIGGER, nullptr, nullptr};
+	MainArg ret = {GenType::RISCV, nullptr, nullptr};
 	for(int i = 1; i < argc; i++)
 	{
 		if(strcmp(argv[i], "-e") == 0) // eeyore mode
@@ -71,31 +72,34 @@ int main(int argc, char *argv[])
 		if(args.type == GenType::EEYORE)
 		{
 			if(args.output_filename == nullptr)
-			{
-				for(const auto &stmt : eeyore_code)
-					cout << stmt;
-			}
+				cout << eeyore_code;
 			else
 			{
 				fstream outf(args.output_filename, fstream::out);
-				for(const auto &stmt : eeyore_code)
-					outf << stmt;
+				outf << eeyore_code;
 			}
 			return 0;
 		}
 
 		backend::tigger::TiggerGenerator tigger_gen(eeyore_code, std::move(eeyore_gen.all_defined_vars()));
 		const auto &tigger_code = tigger_gen.generate_tigger();
+
 		if(args.output_filename == nullptr)
 		{
-			for(const auto &stmt : tigger_code)
-				cout << stmt;
+			if(args.type == GenType::RISCV)
+				cout << riscv_mode;
+			else
+				cout << tigger_mode;
+			cout << tigger_code;
 		}
 		else
 		{
 			fstream outf(args.output_filename, fstream::out);
-			for(const auto &stmt : tigger_code)
-				outf << stmt;
+			if(args.type == GenType::RISCV)
+				outf << riscv_mode;
+			else
+				outf << tigger_mode;
+			outf << tigger_code;
 		}
 	}
 	catch(utils::InternalError &e)
